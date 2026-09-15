@@ -1,13 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { BountyCard, ContentCard, ContentDetail } from "@/types";
 import { Banner, Empty, Field, Icon, Meter, Money, SearchField, Skeleton, formData, type IconName } from "./ui";
 import { BountyTeaser } from "./bounties";
 import { PaidFile, Report, SaveButton, TxLink, hay, useLoad } from "./shared";
 import { useSession } from "./session";
-import { payError } from "./wallet";
+import { PayBar, usePayFlow } from "./pay";
 import { formatNim } from "@/money";
 import { isNimiqAddress } from "@/address";
 import { categoryLabel, groupByCategory } from "@/categories";
@@ -96,12 +96,16 @@ export function ListingCard({ item, progress }: { item: ContentCard; progress?: 
 }
 
 export function Discover() {
-  const { data, error, loading } = useLoad<{ listings: ContentCard[]; bounties: BountyCard[] }>("feed");
+  const listingsLoad = useLoad<{ items: ContentCard[] }>("catalog");
+  const bountiesLoad = useLoad<{ items: BountyCard[] }>("bounties");
   const [q, setQ] = useState("");
-  if (loading) return <Skeleton label="Loading the counter" />;
-  if (error) return <Banner kind="err">{error}</Banner>;
-  const listings = (data?.listings ?? []).filter((c) => hay(q, c.title, c.description, c.creatorUsername, categoryLabel(c.category)));
-  const bounties = (data?.bounties ?? []).filter((b) => hay(q, b.title, b.brief, b.sponsorUsername, categoryLabel(b.category)));
+  if (listingsLoad.loading || bountiesLoad.loading) return <Skeleton label="Loading the counter" />;
+  if (listingsLoad.error) return <Banner kind="err">{listingsLoad.error}</Banner>;
+  if (bountiesLoad.error) return <Banner kind="err">{bountiesLoad.error}</Banner>;
+  const listings = (listingsLoad.data?.items ?? []).filter((c) => hay(q, c.title, c.description, c.creatorUsername, categoryLabel(c.category)));
+  const bounties = (bountiesLoad.data?.items ?? [])
+    .filter((b) => b.state === "open")
+    .filter((b) => hay(q, b.title, b.brief, b.sponsorUsername, categoryLabel(b.category)));
   return (
     <div className="stack page">
       <div>
@@ -181,83 +185,25 @@ export function Learn() {
 }
 
 export function Listing({ id }: { id: string }) {
-  const { wallet, pay, refresh } = useSession();
+  const { wallet, refresh } = useSession();
   const { data, error, loading, reload } = useLoad<{
     item: ContentDetail;
     relatedBounties: BountyCard[];
     pending: { status: string; txHash: string } | null;
     receipt: { amountLuna: number; txHash: string } | null;
   }>(`content/${id}`);
-  const [status, setStatus] = useState("");
-  const [err, setErr] = useState("");
-  const [txHash, setTxHash] = useState("");
-  const [confirming, setConfirming] = useState(false);
   const item = data?.item;
-  const pendingHash = txHash || data?.pending?.txHash || "";
-  useEffect(() => {
-    if (!pendingHash || data?.item?.body) return;
-    let stop = false;
-    let n = 0;
-    async function tick() {
-      n += 1;
-      try {
-        const res = await post<{ owned?: boolean }>("purchase", { contentId: id, txHash: pendingHash });
-        if (stop) return;
-        if (res.owned) {
-          await refresh();
-          reload();
-          return;
-        }
-      } catch {
-        /* chain not ready */
-      }
-      if (!stop && n < 8) window.setTimeout(tick, 2500);
-    }
-    tick();
-    return () => {
-      stop = true;
-    };
-  }, [id, pendingHash, data?.item?.body]);
-  async function confirm(hash: string) {
-    const res = await post<{ owned?: boolean; status?: string }>("purchase", { contentId: item!.id, txHash: hash });
-    if (res.owned) {
+  const flow = usePayFlow({
+    pendingHash: data?.pending?.txHash ?? "",
+    settled: Boolean(item?.body),
+    confirm: async (hash) => {
+      const res = await post<{ owned?: boolean }>("purchase", { contentId: id, txHash: hash });
+      if (!res.owned) return false;
       await refresh();
       reload();
-      setStatus("");
-      setConfirming(false);
       return true;
-    }
-    setStatus("NIM already left your wallet. Waiting for the chain to confirm it.");
-    return false;
-  }
-  async function unlock() {
-    if (!item) return;
-    if (!wallet) {
-      setErr("Wallet disconnected. Connect from the header.");
-      return;
-    }
-    if (!confirming) {
-      setConfirming(true);
-      setErr("");
-      setStatus("");
-      return;
-    }
-    setErr("");
-    setStatus("A Hub window should open. Approve the payment there.");
-    try {
-      const hash = await pay({
-        recipient: item.creatorWallet,
-        amountLuna: item.priceLuna,
-        memo: `dplace:content:${item.id}`,
-      });
-      setTxHash(hash);
-      setStatus("NIM sent. Confirming on the Nimiq chain…");
-      await confirm(hash);
-    } catch (e) {
-      setErr(payError(e));
-      setStatus("failed");
-    }
-  }
+    },
+  });
   if (loading) return <Skeleton label="Opening listing" />;
   if (error || !item) return <Banner kind="err">{error || "Missing listing."}</Banner>;
   const related = data?.relatedBounties ?? [];
@@ -329,40 +275,35 @@ export function Listing({ id }: { id: string }) {
       ) : (
         <div className="stack">
           {!wallet ? <Banner kind="err">Wallet disconnected. Connect from the header to pay.</Banner> : null}
-          {confirming && !status ? (
+          {flow.armed && !flow.status ? (
             <Banner>
               You will pay {formatNim(item.priceLuna)} to @{item.creatorUsername}
               {isNimiqAddress(item.creatorWallet) ? ` (${item.creatorWallet})` : ""}. Hub opens a popup; allow it.
               NIM goes to that wallet, not to D place.
             </Banner>
           ) : null}
-          {status && status !== "failed" ? <Banner>{status}</Banner> : null}
-          {err ? <Banner kind="err">{err}</Banner> : null}
-          {txHash || data?.pending?.txHash ? <TxLink hash={txHash || data!.pending!.txHash} /> : null}
-          {demoSeller && realBuyer ? null : data?.pending || (txHash && status !== "failed" && !item.body) ? (
-            <div className="pay-bar">
-              <button
-                className="btn gold"
-                onClick={() => confirm(txHash || data?.pending?.txHash || "")}
-                disabled={!(txHash || data?.pending?.txHash)}
-              >
-                <Icon name="check" />
-                Check the chain again
-              </button>
-            </div>
-          ) : (
-            <div className="pay-bar">
-              <button className="btn gold" onClick={unlock} disabled={!wallet || Boolean(status) && status !== "failed"}>
-                <Icon name="lock" />
-                {confirming ? `Pay ${formatNim(item.priceLuna)}` : "Unlock with NIM"}
-              </button>
-              {confirming ? (
-                <button className="btn ghost" type="button" onClick={() => setConfirming(false)}>
-                  <Icon name="back" />
-                  Back
-                </button>
-              ) : null}
-            </div>
+          {flow.status && flow.status !== "failed" ? <Banner>{flow.status}</Banner> : null}
+          {flow.err ? <Banner kind="err">{flow.err}</Banner> : null}
+          {flow.hash ? <TxLink hash={flow.hash} /> : null}
+          {demoSeller && realBuyer ? null : (
+            <PayBar
+              icon="lock"
+              idle="Unlock with NIM"
+              armedLabel={`Pay ${formatNim(item.priceLuna)}`}
+              armed={flow.armed}
+              disabled={!wallet}
+              waiting={flow.waiting}
+              onIdle={flow.arm}
+              onPay={() =>
+                void flow.run({
+                  recipient: item.creatorWallet,
+                  amountLuna: item.priceLuna,
+                  memo: `dplace:content:${item.id}`,
+                })
+              }
+              onBack={flow.disarm}
+              onRetry={flow.retry}
+            />
           )}
         </div>
       )}

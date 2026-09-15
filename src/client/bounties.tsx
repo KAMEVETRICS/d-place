@@ -1,16 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useState } from "react";
+import { FormEvent, useState, type Dispatch, type ReactNode, type SetStateAction } from "react";
 import type { BountyCard, PayoutRow, Submission } from "@/types";
 import { Banner, Empty, Field, Icon, Money, SearchField, Skeleton, formData } from "./ui";
 import { PaidFile, Report, SaveButton, hay, useLoad } from "./shared";
 import { useSession } from "./session";
-import { payError, type PayRequest } from "./wallet";
+import { type PayRequest } from "./wallet";
+import { PayBar, usePayFlow } from "./pay";
 import { formatNim } from "@/money";
 import { categoryLabel } from "@/categories";
 import { LIMIT } from "@/validate";
 import { post, uploadFile } from "./api";
+import type { BountyState } from "@/types";
 
 export function BountyTeaser({ bounty, featured }: { bounty: BountyCard; featured?: boolean }) {
   return (
@@ -78,113 +80,50 @@ export function Bounties() {
 }
 
 export function Bounty({ id }: { id: string }) {
-  const { wallet, pay, refresh } = useSession();
+  const { wallet, refresh } = useSession();
   const { data, error, loading, reload } = useLoad<{
     bounty: BountyCard;
     submissions: Submission[];
     fund: { recipient: string; amountLuna: number; memo: string } | null;
     payouts: PayoutRow[];
   }>(`bounties/${id}`);
-  const [status, setStatus] = useState("");
-  const [err, setErr] = useState("");
   const [picked, setPicked] = useState<string[]>([]);
-  const [fundConfirm, setFundConfirm] = useState(false);
+  const [note, setNote] = useState("");
   const b = data?.bounty;
-  const mine = b?.sponsorWallet === wallet;
-
-  async function fundIt() {
-    if (!data?.fund || !b) return;
-    if (!fundConfirm) {
-      setFundConfirm(true);
-      setErr("");
-      return;
-    }
-    setErr("");
-    setStatus("A Hub window should open. Approve the prize payment there.");
-    try {
-      const txHash = await pay(data.fund);
-      setStatus("NIM sent to escrow. Confirming on the chain…");
-      await post("bounties/fund", { bountyId: b.id, txHash });
-      await refresh();
-      reload();
-      setStatus("");
-      setFundConfirm(false);
-    } catch (e) {
-      setErr(payError(e));
-      setStatus("");
-    }
-  }
-
-  async function submit(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    if (!b) return;
-    if (!wallet) {
-      setErr("Wallet disconnected. Connect from the header.");
-      return;
-    }
-    const f = formData(e);
-    const input = e.currentTarget.querySelector('input[type="file"]') as HTMLInputElement | null;
-    setErr("");
-    try {
-      let fileId = "";
-      if (input?.files?.[0]) fileId = (await uploadFile(input.files[0])).id;
-      await post("submissions", { bountyId: b.id, assetUrl: f.assetUrl, note: f.note, fileId });
-      location.reload();
-    } catch (er) {
-      setErr(er instanceof Error ? er.message : "Submit failed.");
-    }
-  }
-
-  async function cancelBounty() {
-    if (!b) return;
-    setErr("");
-    try {
-      const res = await post<{ state: string; refund?: PayRequest }>("bounties/cancel", { bountyId: b.id });
-      if (res.refund) {
-        setStatus("Approve the refund payment…");
-        const txHash = await pay(res.refund);
-        await post("bounties/refund", { bountyId: b.id, txHash });
+  const fundFlow = usePayFlow({
+    confirm: async (hash) => {
+      try {
+        await post("bounties/fund", { bountyId: id, txHash: hash });
+        await refresh();
+        reload();
+        return true;
+      } catch {
+        return false;
       }
-      location.reload();
-    } catch (e) {
-      setErr(e instanceof Error ? e.message : "Could not cancel.");
-    }
-  }
-
-  async function closeReview() {
-    await post("bounties/close", { bountyId: id });
-    location.reload();
-  }
-
-  async function chooseWinners() {
-    if (!b) return;
-    setErr("");
-    try {
-      await post("bounties/winners", { bountyId: id, winnerIds: picked });
-      await refresh();
-      reload();
-    } catch (e) {
-      setErr(e instanceof Error ? e.message : "Could not mark winners.");
-    }
-  }
-
-  async function payOne(p: PayoutRow) {
-    setErr("");
-    setStatus(`Approve ${formatNim(p.amountLuna)} to ${p.wallet} in Hub…`);
-    try {
-      const txHash = await pay({ recipient: p.wallet, amountLuna: p.amountLuna, memo: p.memo });
-      await post("payouts/confirm", { bountyId: id, payoutId: p.id, txHash });
-      setStatus("");
-      await refresh();
-      reload();
-    } catch (e) {
-      setErr(payError(e));
-      setStatus("");
-    }
-  }
+    },
+  });
+  const payFlow = usePayFlow();
 
   if (loading) return <Skeleton label="Opening bounty" />;
   if (error || !b) return <Banner kind="err">{error || "Missing bounty."}</Banner>;
+  const mine = b.sponsorWallet === wallet;
+  const ctx: BountyCtx = {
+    id,
+    b,
+    mine,
+    wallet,
+    fund: data.fund,
+    payouts: data.payouts ?? [],
+    submissions: data.submissions,
+    picked,
+    setPicked,
+    fundFlow,
+    payFlow,
+    reload,
+    refresh,
+    setNote,
+  };
+
   return (
     <div className="stack page">
       <div className="page-head">
@@ -209,75 +148,125 @@ export function Bounty({ id }: { id: string }) {
       <p>
         <strong>Deliver:</strong> {b.deliverables}
       </p>
-      {status ? <Banner>{status}</Banner> : null}
-      {err ? <Banner kind="err">{err}</Banner> : null}
-      {b.state === "funding" && mine && fundConfirm ? (
+      {fundFlow.status && fundFlow.status !== "failed" ? <Banner>{fundFlow.status}</Banner> : null}
+      {fundFlow.err ? <Banner kind="err">{fundFlow.err}</Banner> : null}
+      {payFlow.status && payFlow.status !== "failed" ? <Banner>{payFlow.status}</Banner> : null}
+      {payFlow.err ? <Banner kind="err">{payFlow.err}</Banner> : null}
+      {note ? <Banner kind="err">{note}</Banner> : null}
+      {STATE_PANEL[b.state](ctx)}
+      <Submissions ctx={ctx} />
+      <Report targetType="bounty" targetId={b.id} />
+    </div>
+  );
+}
+
+type BountyCtx = {
+  id: string;
+  b: BountyCard;
+  mine: boolean;
+  wallet: string;
+  fund: { recipient: string; amountLuna: number; memo: string } | null;
+  payouts: PayoutRow[];
+  submissions: Submission[];
+  picked: string[];
+  setPicked: Dispatch<SetStateAction<string[]>>;
+  fundFlow: ReturnType<typeof usePayFlow>;
+  payFlow: ReturnType<typeof usePayFlow>;
+  reload: () => void;
+  refresh: () => Promise<unknown>;
+  setNote: (s: string) => void;
+};
+
+function FundingPanel({ ctx }: { ctx: BountyCtx }) {
+  if (!ctx.mine) return null;
+  return (
+    <>
+      {ctx.fundFlow.armed && !ctx.fundFlow.status ? (
         <Banner>
-          You will send {formatNim(b.rewardLuna)} to escrow ({data?.fund?.recipient}). Hub opens a popup.
+          You will send {formatNim(ctx.b.rewardLuna)} to escrow ({ctx.fund?.recipient}). Hub opens a popup.
           The prize is not live until that payment confirms.
         </Banner>
       ) : null}
-      {b.state === "funding" && mine ? (
-        <div className="pay-bar">
-          <button className="btn gold" onClick={fundIt}>
-            <Icon name="coin" />
-            {fundConfirm ? `Pay ${formatNim(b.rewardLuna)} prize` : "Fund prize with NIM"}
-          </button>
-          {fundConfirm ? (
-            <button className="btn ghost" type="button" onClick={() => setFundConfirm(false)}>
-              <Icon name="back" />
-              Back
-            </button>
-          ) : null}
-        </div>
+      {ctx.fund ? (
+        <PayBar
+          icon="coin"
+          idle="Fund prize with NIM"
+          armedLabel={`Pay ${formatNim(ctx.b.rewardLuna)} prize`}
+          armed={ctx.fundFlow.armed}
+          waiting={ctx.fundFlow.waiting}
+          onIdle={ctx.fundFlow.arm}
+          onPay={() => void ctx.fundFlow.run(ctx.fund!)}
+          onBack={ctx.fundFlow.disarm}
+          onRetry={ctx.fundFlow.retry}
+        />
       ) : null}
-      {b.state === "open" && !mine ? (
-        <form className="stack" onSubmit={submit}>
-          <h2>Submit work</h2>
-          {!wallet ? <Banner kind="err">Wallet disconnected. Connect from the header.</Banner> : null}
-          <Field name="assetUrl" label="Work link (or attach a file)" />
-          <label className="field">
-            <span>File</span>
-            <input type="file" />
-          </label>
-          <Field name="note" label="What you delivered" textarea required maxLength={LIMIT.note} />
-          <button className="btn" type="submit" disabled={!wallet}>
-            <Icon name="send" />
-            Submit work
-          </button>
-        </form>
-      ) : null}
-      {b.state === "open" && mine ? (
-        <div className="row">
-          <button className="btn" onClick={closeReview}>
-            <Icon name="check" />
-            Close submissions
-          </button>
-          <button className="btn ghost" onClick={cancelBounty}>
-            <Icon name="close" />
-            Cancel bounty
-          </button>
-        </div>
-      ) : null}
-      {b.state === "funding" && mine ? (
-        <button className="btn ghost" onClick={cancelBounty}>
-          <Icon name="close" />
-          Cancel without funding
+      <button className="btn ghost" type="button" onClick={() => void act(ctx, "cancel")}>
+        <Icon name="close" />
+        Cancel without funding
+      </button>
+    </>
+  );
+}
+
+function OpenPanel({ ctx }: { ctx: BountyCtx }) {
+  if (ctx.mine) {
+    return (
+      <div className="row">
+        <button className="btn" type="button" onClick={() => void act(ctx, "close")}>
+          <Icon name="check" />
+          Close submissions
         </button>
-      ) : null}
-      {b.state === "payout_pending" || (data.payouts?.length ?? 0) > 0 ? (
+        <button className="btn ghost" type="button" onClick={() => void act(ctx, "cancel")}>
+          <Icon name="close" />
+          Cancel bounty
+        </button>
+      </div>
+    );
+  }
+  return (
+    <form className="stack" onSubmit={(e) => void submitWork(e, ctx)}>
+      <h2>Submit work</h2>
+      {!ctx.wallet ? <Banner kind="err">Wallet disconnected. Connect from the header.</Banner> : null}
+      <Field name="assetUrl" label="Work link (or attach a file)" />
+      <label className="field">
+        <span>File</span>
+        <input type="file" />
+      </label>
+      <Field name="note" label="What you delivered" textarea required maxLength={LIMIT.note} />
+      <button className="btn" type="submit" disabled={!ctx.wallet}>
+        <Icon name="send" />
+        Submit work
+      </button>
+    </form>
+  );
+}
+
+function ReviewPanel({ ctx }: { ctx: BountyCtx }) {
+  if (!ctx.mine) return null;
+  return (
+    <button className="btn gold" type="button" onClick={() => void act(ctx, "winners")} disabled={ctx.picked.length < 1}>
+      <Icon name="pay" />
+      Mark {ctx.picked.length || 0} winner{ctx.picked.length === 1 ? "" : "s"}
+    </button>
+  );
+}
+
+function PayoutPanel({ ctx }: { ctx: BountyCtx }) {
+  return (
+    <>
+      {ctx.payouts.length ? (
         <section className="stack">
           <h2>Payouts</h2>
           <p className="meta">Pay each winner on its own. If Hub closes, that row stays unpaid so you can retry it.</p>
-          {(data.payouts ?? []).map((p) => (
+          {ctx.payouts.map((p) => (
             <article className="card" key={p.id}>
               <div className="card-foot">
                 <Money luna={p.amountLuna} />
                 <span className="meta">{p.wallet}</span>
                 {p.status === "paid" ? <span className="badge">Paid</span> : null}
               </div>
-              {mine && p.status !== "paid" ? (
-                <button className="btn gold" type="button" onClick={() => payOne(p)}>
+              {ctx.mine && p.status !== "paid" ? (
+                <button className="btn gold" type="button" onClick={() => void payOne(ctx, p)}>
                   <Icon name="pay" />
                   Pay this winner
                 </button>
@@ -286,45 +275,51 @@ export function Bounty({ id }: { id: string }) {
           ))}
         </section>
       ) : null}
-      {b.state === "payout_pending" ? (
-        <button className="btn danger" onClick={async () => { await post("bounties/dispute", { bountyId: id }); location.reload(); }}>
+      {ctx.b.state === "payout_pending" ? (
+        <button className="btn danger" type="button" onClick={() => void act(ctx, "dispute")}>
           <Icon name="flag" />
           Open a dispute
         </button>
       ) : null}
-      {b.state === "disputed" && mine ? (
-        <div className="row">
-          <button
-            className="btn"
-            onClick={async () => {
-              await post("bounties/resolve", { bountyId: id, action: "paid" });
-              location.reload();
-            }}
-          >
-            <Icon name="check" />
-            Resolve as paid
-          </button>
-          <button
-            className="btn ghost"
-            onClick={async () => {
-              const res = await post<{ refund?: PayRequest }>("bounties/resolve", { bountyId: id, action: "refund" });
-              if (res.refund) {
-                const txHash = await pay(res.refund);
-                await post("bounties/refund", { bountyId: id, txHash });
-              }
-              location.reload();
-            }}
-          >
-            <Icon name="wallet" />
-            Refund prize
-          </button>
-        </div>
-      ) : null}
+    </>
+  );
+}
+
+function DisputePanel({ ctx }: { ctx: BountyCtx }) {
+  if (!ctx.mine) return null;
+  return (
+    <div className="row">
+      <button className="btn" type="button" onClick={() => void act(ctx, "paid")}>
+        <Icon name="check" />
+        Resolve as paid
+      </button>
+      <button className="btn ghost" type="button" onClick={() => void act(ctx, "refund")}>
+        <Icon name="wallet" />
+        Refund prize
+      </button>
+    </div>
+  );
+}
+
+const STATE_PANEL: Record<BountyState, (ctx: BountyCtx) => ReactNode> = {
+  funding: (ctx) => <FundingPanel ctx={ctx} />,
+  open: (ctx) => <OpenPanel ctx={ctx} />,
+  review: () => null,
+  payout_pending: (ctx) => <PayoutPanel ctx={ctx} />,
+  paid: (ctx) => <PayoutPanel ctx={ctx} />,
+  disputed: (ctx) => <DisputePanel ctx={ctx} />,
+  refunded: () => null,
+  cancelled: () => null,
+};
+
+function Submissions({ ctx }: { ctx: BountyCtx }) {
+  return (
+    <>
       <h2>Submissions</h2>
-      {(data?.submissions.length ?? 0) === 0 ? (
+      {ctx.submissions.length === 0 ? (
         <Empty title="No submissions yet" body="When work comes in, it lands here." />
       ) : (
-        data!.submissions.map((s) => (
+        ctx.submissions.map((s) => (
           <article className="card" key={s.id}>
             <div className="row">
               <Link href={`/u/${s.submitterUsername}`}>@{s.submitterUsername}</Link>
@@ -333,14 +328,14 @@ export function Bounty({ id }: { id: string }) {
             <p>{s.note}</p>
             {s.assetUrl ? <a href={s.assetUrl}>{s.assetUrl}</a> : null}
             {s.fileId ? <PaidFile id={s.fileId} mime={null} name="Submission file" /> : null}
-            {mine && b.state === "review" ? (
+            {ctx.mine && ctx.b.state === "review" ? (
               <label className="row">
                 <input
                   type="checkbox"
-                  checked={picked.includes(s.id)}
+                  checked={ctx.picked.includes(s.id)}
                   onChange={(e) => {
-                    setPicked((cur) => {
-                      if (e.target.checked) return [...cur, s.id].slice(0, b.winnerCount);
+                    ctx.setPicked((cur) => {
+                      if (e.target.checked) return [...cur, s.id].slice(0, ctx.b.winnerCount);
                       return cur.filter((sid) => sid !== s.id);
                     });
                   }}
@@ -351,13 +346,73 @@ export function Bounty({ id }: { id: string }) {
           </article>
         ))
       )}
-      {mine && b.state === "review" ? (
-        <button className="btn gold" onClick={chooseWinners} disabled={picked.length < 1}>
-          <Icon name="pay" />
-          Mark {picked.length || 0} winner{picked.length === 1 ? "" : "s"}
-        </button>
-      ) : null}
-      <Report targetType="bounty" targetId={b.id} />
-    </div>
+      {ctx.mine && ctx.b.state === "review" ? <ReviewPanel ctx={ctx} /> : null}
+    </>
   );
+}
+
+async function submitWork(e: FormEvent<HTMLFormElement>, ctx: BountyCtx) {
+  e.preventDefault();
+  if (!ctx.wallet) {
+    ctx.setNote("Wallet disconnected. Connect from the header.");
+    return;
+  }
+  const f = formData(e);
+  const input = e.currentTarget.querySelector('input[type="file"]') as HTMLInputElement | null;
+  ctx.setNote("");
+  try {
+    let fileId = "";
+    if (input?.files?.[0]) fileId = (await uploadFile(input.files[0])).id;
+    await post("submissions", { bountyId: ctx.b.id, assetUrl: f.assetUrl, note: f.note, fileId });
+    location.reload();
+  } catch (er) {
+    ctx.setNote(er instanceof Error ? er.message : "Submit failed.");
+  }
+}
+
+async function payOne(ctx: BountyCtx, p: PayoutRow) {
+  await ctx.payFlow.run({ recipient: p.wallet, amountLuna: p.amountLuna, memo: p.memo }, async (hash) => {
+    try {
+      await post("payouts/confirm", { bountyId: ctx.id, payoutId: p.id, txHash: hash });
+      await ctx.refresh();
+      ctx.reload();
+      return true;
+    } catch {
+      return false;
+    }
+  });
+}
+
+async function act(ctx: BountyCtx, kind: "cancel" | "close" | "winners" | "dispute" | "paid" | "refund") {
+  ctx.setNote("");
+  try {
+    if (kind === "cancel") {
+      const res = await post<{ state: string; refund?: PayRequest }>("bounties/cancel", { bountyId: ctx.id });
+      if (res.refund) {
+        await ctx.payFlow.run(res.refund, async (hash) => {
+          await post("bounties/refund", { bountyId: ctx.id, txHash: hash });
+          return true;
+        });
+      }
+      location.reload();
+      return;
+    }
+    if (kind === "close") await post("bounties/close", { bountyId: ctx.id });
+    if (kind === "winners") await post("bounties/winners", { bountyId: ctx.id, winnerIds: ctx.picked });
+    if (kind === "dispute") await post("bounties/dispute", { bountyId: ctx.id });
+    if (kind === "paid") await post("bounties/resolve", { bountyId: ctx.id, action: "paid" });
+    if (kind === "refund") {
+      const res = await post<{ refund?: PayRequest }>("bounties/resolve", { bountyId: ctx.id, action: "refund" });
+      if (res.refund) {
+        await ctx.payFlow.run(res.refund, async (hash) => {
+          await post("bounties/refund", { bountyId: ctx.id, txHash: hash });
+          return true;
+        });
+      }
+    }
+    await ctx.refresh();
+    ctx.reload();
+  } catch (e) {
+    ctx.setNote(e instanceof Error ? e.message : "That action failed.");
+  }
 }
