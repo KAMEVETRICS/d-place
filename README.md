@@ -4,7 +4,7 @@ A Nimiq Pay Mini App stall for knowledge and funded work. Paid in NIM.
 
 Username sits next to the wallet. Bounty owners pick how many winners.
 
-Live host: [deplace.store](https://deplace.store) (stall at `/app`). Handbook is in `gitbook/` for GitBook.
+Live host: [deplace.space](https://deplace.space) (stall at `/app`). Handbook is in `gitbook/` for GitBook.
 
 ## Run
 
@@ -24,8 +24,8 @@ Uses `@nimiq/mini-app-sdk` `init()` inside Pay:
 4. Confirmation against `NIMIQ_RPC` (default `https://rpc.nimiqwatch.com`)
 
 ```
-nimiqpay://miniapp?url=https://deplace.store/app
-https://nimpay.app/miniapps/open/https://deplace.store/app
+nimiqpay://miniapp?url=https://deplace.space/app
+https://nimpay.app/miniapps/open/https://deplace.space/app
 ```
 
 In a browser, Connect with Hub.
