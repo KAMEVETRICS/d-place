@@ -70,7 +70,7 @@ export async function clearSession() {
   const jar = await cookies();
   const token = jar.get(COOKIE)?.value;
   if (token) await run("DELETE FROM sessions WHERE token = ?", [token]);
-  jar.delete(COOKIE, { path: "/", secure: process.env.NODE_ENV === "production" });
+  jar.delete(COOKIE);
 }
 
 export async function profileFor(wallet: string) {
