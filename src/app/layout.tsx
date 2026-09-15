@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Fraunces, Source_Sans_3 } from "next/font/google";
-import { App } from "@/client/App";
+import { SessionProvider } from "@/client/session";
 import "./globals.css";
 
 const display = Fraunces({ subsets: ["latin"], variable: "--font-display" });
@@ -15,8 +15,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body className={`${display.variable} ${sans.variable}`}>
-        <App />
-        {children}
+        <SessionProvider>{children}</SessionProvider>
       </body>
     </html>
   );

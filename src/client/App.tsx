@@ -1,15 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { api, post } from "./api";
-import { Bounties, Bounty, Create, Discover, Learn, Library, Listing, Me, Person, Saved } from "./screens";
-import { Docs, Landing, OpenIntro, Support } from "./site";
+import { usePathname } from "next/navigation";
+import type { ReactNode } from "react";
 import { Icon, type IconName } from "./ui";
-import { demoHash, hubLogin, hubPay, inPay, sendNim, signInPay } from "./wallet";
-import type { LoginProof, PayRequest } from "./wallet";
-import type { Profile, Session } from "@/types";
+import { useSession } from "./session";
 
 const STALL: { href: string; label: string; icon: IconName }[] = [
   { href: "/app", label: "Shop", icon: "shop" },
@@ -35,10 +30,6 @@ function onPath(href: string, path: string) {
   return path === href || path.startsWith(`${href}/`);
 }
 
-function isSite(path: string) {
-  return path === "/" || path === "/docs" || path === "/support" || path === "/open";
-}
-
 function NavLink({ href, label, icon, path }: { href: string; label: string; icon: IconName; path: string }) {
   return (
     <Link href={href} aria-current={onPath(href, path) ? "page" : undefined}>
@@ -48,125 +39,11 @@ function NavLink({ href, label, icon, path }: { href: string; label: string; ico
   );
 }
 
-export function App() {
+export function StallShell({ children }: { children: ReactNode }) {
   const path = usePathname();
-  const router = useRouter();
-  const [session, setSession] = useState<Session & { profile?: Profile | null; loading: boolean }>({
-    wallet: "",
-    username: null,
-    demo: true,
-    loading: true,
-  });
-  const [error, setError] = useState("");
-  const [busy, setBusy] = useState("");
-  const [payHost, setPayHost] = useState(false);
-  const booted = useRef(false);
+  const { wallet, username, loading, payHost, error, busy, connectPayOrHub, signOut, useDemo } = useSession();
 
-  const refresh = useCallback(async () => {
-    const s = await api<Session & { profile: Profile | null }>("session");
-    setSession({ ...s, wallet: s.wallet ?? "", loading: false });
-    return s;
-  }, []);
-
-  async function connectWith(proof: LoginProof, nonce: string) {
-    await post("session", {
-      wallet: proof.wallet,
-      nonce,
-      signature: proof.signature,
-      publicKey: proof.publicKey ?? "",
-    });
-    await refresh();
-  }
-
-  const connectPayOrHub = useCallback(async () => {
-    setError("");
-    setBusy("Connecting");
-    try {
-      const { nonce, message } = await api<{ nonce: string; message: string }>("challenge");
-      const proof = inPay() ? await signInPay(message) : await hubLogin(message);
-      await connectWith(proof, nonce);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not connect.");
-    } finally {
-      setBusy("");
-    }
-  }, []);
-
-  useEffect(() => {
-    if (booted.current) return;
-    booted.current = true;
-    const hosted = inPay();
-    setPayHost(hosted);
-    if (hosted && isSite(path)) router.replace("/app");
-    refresh()
-      .then(async (s) => {
-        if (!hosted || s.wallet) return;
-        await connectPayOrHub();
-      })
-      .catch((e: Error) => {
-        setError(e.message);
-        setSession((cur) => ({ ...cur, loading: false }));
-      });
-  }, [refresh, path, router]);
-
-  const signOut = useCallback(async () => {
-    localStorage.removeItem("dplace.demo");
-    await post("logout", {});
-    await refresh();
-  }, [refresh]);
-
-  async function useDemo(who: "demo:alice" | "demo:bob") {
-    setError("");
-    setBusy("Connecting");
-    try {
-      localStorage.setItem("dplace.demo", who);
-      await post("logout", {});
-      const { nonce } = await api<{ nonce: string; message: string }>("challenge");
-      await post("session", { wallet: who, nonce, signature: `demo-sig:${who}` });
-      await refresh();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not connect.");
-    } finally {
-      setBusy("");
-    }
-  }
-
-  const pay = useCallback(
-    async (req: PayRequest) => {
-      if (session.wallet.startsWith("demo:")) return demoHash(session.wallet, req);
-      if (inPay()) return sendNim(req);
-      return hubPay(req);
-    },
-    [session.wallet],
-  );
-
-  const page = useMemo(() => {
-    const parts = path.split("/").filter(Boolean);
-    if (parts[0] === "learn") return <Learn />;
-    if (parts[0] === "library") return <Library authed={Boolean(session.username)} />;
-    if (parts[0] === "saved") return <Saved authed={Boolean(session.username)} />;
-    if (parts[0] === "create") return <Create authed={Boolean(session.username)} />;
-    if (parts[0] === "me") return <Me onSignOut={signOut} onHub={connectPayOrHub} busy={busy} />;
-    if (parts[0] === "u" && parts[1]) return <Person username={parts[1]} />;
-    if (parts[0] === "c" && parts[1]) {
-      return <Listing id={parts[1]} wallet={session.wallet} pay={pay} onChange={async () => { await refresh(); }} />;
-    }
-    if (parts[0] === "bounties" && parts[1]) {
-      return <Bounty id={parts[1]} wallet={session.wallet} pay={pay} onChange={async () => { await refresh(); }} />;
-    }
-    if (parts[0] === "bounties") return <Bounties />;
-    if (parts[0] === "app") return <Discover />;
-    return <Discover />;
-  }, [path, session.wallet, session.username, pay, refresh, signOut, connectPayOrHub, busy]);
-
-  if (isSite(path) && !payHost) {
-    if (path === "/docs") return <Docs />;
-    if (path === "/support") return <Support />;
-    if (path === "/open") return <OpenIntro />;
-    return <Landing />;
-  }
-
-  if (session.loading) {
+  if (loading) {
     return (
       <div className="intro boot" role="status">
         <span className="intro-mark" aria-hidden>
@@ -181,7 +58,7 @@ export function App() {
     );
   }
 
-  if (!session.wallet) {
+  if (!wallet) {
     return (
       <div className="intro">
         <span className="intro-mark" aria-hidden>
@@ -223,9 +100,9 @@ export function App() {
     );
   }
 
-  const who = session.username ? `@${session.username}` : "friend";
-  const initial = (session.username || "?").slice(0, 1).toUpperCase();
-  const demo = session.wallet.startsWith("demo:");
+  const who = username ? `@${username}` : "friend";
+  const initial = (username || "?").slice(0, 1).toUpperCase();
+  const demo = wallet.startsWith("demo:");
 
   return (
     <div className="shell">
@@ -261,7 +138,7 @@ export function App() {
         </Link>
         <div className="greet desk-only">
           <p className="hello">Hello, {who}</p>
-          <p>{session.username ? "The stall is open." : "Pick a username so people can find you."}</p>
+          <p>{username ? "The stall is open." : "Pick a username so people can find you."}</p>
         </div>
         <div className="utilities">
           <Link href="/saved" className="icon-btn" aria-label="Saved" aria-current={onPath("/saved", path) ? "page" : undefined}>
@@ -273,7 +150,7 @@ export function App() {
                 {initial}
               </span>
               <span>
-                <strong>{session.username ? `@${session.username}` : "Set username"}</strong>
+                <strong>{username ? `@${username}` : "Set username"}</strong>
                 <small>{demo ? "Demo" : "Wallet"}</small>
               </span>
             </Link>
@@ -285,7 +162,7 @@ export function App() {
       </header>
       <main id="main" className="main">
         {error ? <p className="banner err">{error}</p> : null}
-        {page}
+        {children}
       </main>
       <nav className="dock" aria-label="Primary">
         {DOCK.map((item) => (
