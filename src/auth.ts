@@ -48,7 +48,13 @@ export async function createSession(wallet: string) {
     Date.now(),
   ]);
   const jar = await cookies();
-  jar.set(COOKIE, token, { httpOnly: true, sameSite: "lax", path: "/", maxAge: 60 * 60 * 24 * 30 });
+  jar.set(COOKIE, token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: 60 * 60 * 24 * 30,
+  });
   return token;
 }
 
@@ -64,7 +70,7 @@ export async function clearSession() {
   const jar = await cookies();
   const token = jar.get(COOKIE)?.value;
   if (token) await run("DELETE FROM sessions WHERE token = ?", [token]);
-  jar.delete(COOKIE);
+  jar.delete(COOKIE, { path: "/", secure: process.env.NODE_ENV === "production" });
 }
 
 export async function profileFor(wallet: string) {
