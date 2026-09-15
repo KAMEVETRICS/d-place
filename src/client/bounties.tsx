@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { FormEvent, useState } from "react";
-import type { BountyCard, Submission } from "@/types";
+import type { BountyCard, PayoutRow, Submission } from "@/types";
 import { Banner, Empty, Field, Icon, Money, SearchField, Skeleton, formData } from "./ui";
 import { PaidFile, Report, SaveButton, hay, useLoad } from "./shared";
 import { useSession } from "./session";
@@ -83,6 +83,7 @@ export function Bounty({ id }: { id: string }) {
     bounty: BountyCard;
     submissions: Submission[];
     fund: { recipient: string; amountLuna: number; memo: string } | null;
+    payouts: PayoutRow[];
   }>(`bounties/${id}`);
   const [status, setStatus] = useState("");
   const [err, setErr] = useState("");
@@ -159,19 +160,26 @@ export function Bounty({ id }: { id: string }) {
     if (!b) return;
     setErr("");
     try {
-      const res = await post<{
-        payouts: { id: string; wallet: string; amountLuna: number; memo: string }[];
-        from: string;
-      }>("bounties/winners", { bountyId: id, winnerIds: picked });
-      setStatus("Paying winners…");
-      for (const p of res.payouts) {
-        const txHash = await pay({ recipient: p.wallet, amountLuna: p.amountLuna, memo: p.memo });
-        await post("payouts/confirm", { bountyId: id, payoutId: p.id, txHash });
-      }
+      await post("bounties/winners", { bountyId: id, winnerIds: picked });
       await refresh();
-      location.reload();
+      reload();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Could not mark winners.");
+    }
+  }
+
+  async function payOne(p: PayoutRow) {
+    setErr("");
+    setStatus(`Approve ${formatNim(p.amountLuna)} to ${p.wallet} in Hub…`);
+    try {
+      const txHash = await pay({ recipient: p.wallet, amountLuna: p.amountLuna, memo: p.memo });
+      await post("payouts/confirm", { bountyId: id, payoutId: p.id, txHash });
+      setStatus("");
+      await refresh();
+      reload();
     } catch (e) {
       setErr(payError(e));
+      setStatus("");
     }
   }
 
@@ -257,6 +265,27 @@ export function Bounty({ id }: { id: string }) {
           Cancel without funding
         </button>
       ) : null}
+      {b.state === "payout_pending" || (data.payouts?.length ?? 0) > 0 ? (
+        <section className="stack">
+          <h2>Payouts</h2>
+          <p className="meta">Pay each winner on its own. If Hub closes, that row stays unpaid so you can retry it.</p>
+          {(data.payouts ?? []).map((p) => (
+            <article className="card" key={p.id}>
+              <div className="card-foot">
+                <Money luna={p.amountLuna} />
+                <span className="meta">{p.wallet}</span>
+                {p.status === "paid" ? <span className="badge">Paid</span> : null}
+              </div>
+              {mine && p.status !== "paid" ? (
+                <button className="btn gold" type="button" onClick={() => payOne(p)}>
+                  <Icon name="pay" />
+                  Pay this winner
+                </button>
+              ) : null}
+            </article>
+          ))}
+        </section>
+      ) : null}
       {b.state === "payout_pending" ? (
         <button className="btn danger" onClick={async () => { await post("bounties/dispute", { bountyId: id }); location.reload(); }}>
           <Icon name="flag" />
@@ -325,7 +354,7 @@ export function Bounty({ id }: { id: string }) {
       {mine && b.state === "review" ? (
         <button className="btn gold" onClick={chooseWinners} disabled={picked.length < 1}>
           <Icon name="pay" />
-          Pay {picked.length || 0} winner{picked.length === 1 ? "" : "s"}
+          Mark {picked.length || 0} winner{picked.length === 1 ? "" : "s"}
         </button>
       ) : null}
       <Report targetType="bounty" targetId={b.id} />

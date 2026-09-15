@@ -1,5 +1,5 @@
 import { q, run } from "./db";
-import type { BountyCard, ContentCard, Profile, SaleRow, StallStats, Submission } from "./types";
+import type { BountyCard, ContentCard, Profile, PayoutRow, SaleRow, StallStats, Submission } from "./types";
 
 export async function profileStats(wallet: string): Promise<Profile | null> {
   const rows = await q<{
@@ -378,6 +378,20 @@ export async function creatorSales(wallet: string): Promise<SaleRow[]> {
     revenueLuna: Number(r.revenue),
     ratingAvg: Number(r.rating_avg),
     ratingCount: Number(r.rating_count),
+  }));
+}
+
+export async function payoutsFor(bountyId: string): Promise<PayoutRow[]> {
+  const rows = await q<{ id: string; recipient_wallet: string; amount_luna: number; status: string }>(
+    "SELECT id, recipient_wallet, amount_luna, status FROM payouts WHERE bounty_id = ? ORDER BY rowid",
+    [bountyId],
+  );
+  return rows.map((r) => ({
+    id: r.id,
+    wallet: r.recipient_wallet,
+    amountLuna: Number(r.amount_luna),
+    status: r.status,
+    memo: `dplace:payout:${bountyId}`,
   }));
 }
 

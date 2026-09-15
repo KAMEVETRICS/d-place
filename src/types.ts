@@ -95,6 +95,14 @@ export type SaleRow = {
   ratingCount: number;
 };
 
+export type PayoutRow = {
+  id: string;
+  wallet: string;
+  amountLuna: number;
+  status: string;
+  memo: string;
+};
+
 export type StallStats = {
   uniqueWallets: number;
   purchases: number;
