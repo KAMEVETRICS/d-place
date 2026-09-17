@@ -1,5 +1,5 @@
 import { q, run } from "@/db";
-import { verifyPayout } from "@/escrow";
+import { escrowAddress, verifyPayout } from "@/escrow";
 import { json, mustUser, readBody, str, track } from "@/http";
 import { bountyById } from "@/queries";
 import { txHashOk } from "@/validate";
@@ -27,7 +27,7 @@ export async function POST(req: Request) {
   const ok = await verifyPayout({
     bountyId,
     txHash,
-    from: process.env.ESCROW_ADDRESS && process.env.ESCROW_ADDRESS !== "demo:escrow" ? process.env.ESCROW_ADDRESS : auth.wallet,
+    from: bounty.fundTx ? escrowAddress() : auth.wallet,
     to: payout.recipient_wallet,
     amountLuna: Number(payout.amount_luna),
   });

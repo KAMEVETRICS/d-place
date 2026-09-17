@@ -10,7 +10,7 @@ This handbook matches the product as it ships. It is for people who use the stal
 
 - Not a custodial exchange. Listing payments go to the seller’s Nimiq address. Bounty prizes go to an escrow address you configure, then out to winners.
 - Not a social network. Identity is a Nimiq wallet plus a username you pick once.
-- Not a place to send NIM to demo names. Alice and Bob exist only for local trials.
+- Not a place to send NIM to a name that is not an NQ address. Listing payments go to the seller’s wallet.
 
 ## Two doors
 

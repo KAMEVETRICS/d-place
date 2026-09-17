@@ -114,5 +114,4 @@ export type StallStats = {
 export type Session = {
   wallet: string;
   username: string | null;
-  demo: boolean;
 };

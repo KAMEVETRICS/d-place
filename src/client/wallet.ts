@@ -89,10 +89,6 @@ export async function hubLogin(message: string): Promise<LoginProof> {
   };
 }
 
-export function demoHash(from: string, req: PayRequest) {
-  return `demo:${[from, req.recipient, String(req.amountLuna), req.memo].map(encodeURIComponent).join("~")}`;
-}
-
 export function payError(e: unknown) {
   const m = e instanceof Error ? e.message : "Payment failed.";
   if (/cancel|closed|abort|denied|reject/i.test(m)) {

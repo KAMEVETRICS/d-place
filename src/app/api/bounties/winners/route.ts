@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { run } from "@/db";
+import { escrowAddress } from "@/escrow";
 import { json, mustUser, readBody, str, track } from "@/http";
 import { bountyById, payoutsFor, submissionsFor } from "@/queries";
 
@@ -38,6 +39,6 @@ export async function POST(req: Request) {
   await track(auth.wallet, "winners_selected", { bountyId, count: selected.length });
   return json({
     payouts: await payoutsFor(bountyId),
-    from: bounty.fundTx ? process.env.ESCROW_ADDRESS ?? "demo:escrow" : auth.wallet,
+    from: bounty.fundTx ? escrowAddress() : auth.wallet,
   });
 }

@@ -101,7 +101,7 @@ export function Landing() {
           <h2>How you open it</h2>
           <p>
             In a browser, Open app then Connect with Hub. Inside Nimiq Pay, the Mini App uses the wallet already in the
-            app. Demo Alice and Demo Bob exist only on this machine, and never for a real Pay session.
+            app.
           </p>
         </section>
       </main>

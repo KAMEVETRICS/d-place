@@ -1,4 +1,6 @@
-import type { FormEvent, ReactNode } from "react";
+"use client";
+
+import { useId, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { formatNim } from "@/money";
 
 const PATHS = {
@@ -188,4 +190,97 @@ export function formData(e: FormEvent<HTMLFormElement>) {
     out[k] = String(v);
   });
   return out;
+}
+
+const FILE_ACCEPT = ".pdf,.zip,.txt,.md,.png,.jpg,.jpeg,.webp,.mp4";
+const FILE_MAX = 10 * 1024 * 1024;
+
+function fileSize(n: number) {
+  if (n < 1024) return `${n} B`;
+  if (n < 1024 * 1024) return `${Math.round(n / 1024)} KB`;
+  return `${(n / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+export function FilePick({
+  name = "file",
+  label,
+  hint = "PDF, ZIP, text, Markdown, PNG, JPEG, WebP, or MP4. 10 MB max.",
+}: {
+  name?: string;
+  label: string;
+  hint?: string;
+}) {
+  const id = useId();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [file, setFile] = useState<File | null>(null);
+  const [err, setErr] = useState("");
+
+  function choose() {
+    inputRef.current?.click();
+  }
+
+  function clear() {
+    if (inputRef.current) inputRef.current.value = "";
+    setFile(null);
+    setErr("");
+  }
+
+  return (
+    <div className="field">
+      <span id={id}>{label}</span>
+      <input
+        ref={inputRef}
+        className="file-input"
+        type="file"
+        name={name}
+        accept={FILE_ACCEPT}
+        aria-labelledby={id}
+        onChange={(e) => {
+          const next = e.target.files?.[0] ?? null;
+          if (next && next.size > FILE_MAX) {
+            clear();
+            setErr("File must be 10 MB or smaller.");
+            return;
+          }
+          setErr("");
+          setFile(next);
+        }}
+      />
+      {file ? (
+        <div className="filepick-well">
+          <Icon name="paper" />
+          <div className="filepick-meta">
+            <strong>{file.name}</strong>
+            <span className="meta">{fileSize(file.size)}</span>
+          </div>
+          <div className="filepick-actions">
+            <button type="button" className="btn ghost" onClick={choose}>
+              Replace
+            </button>
+            <button type="button" className="btn ghost" onClick={clear}>
+              Remove
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="filepick-empty">
+          <button type="button" className="btn ghost" onClick={choose}>
+            <Icon name="paper" />
+            Attach file
+          </button>
+          <p className="meta">{hint}</p>
+        </div>
+      )}
+      {err ? (
+        <p className="meta" role="alert">
+          {err}
+        </p>
+      ) : null}
+      {file ? (
+        <p className="sr" role="status">
+          {file.name} attached
+        </p>
+      ) : null}
+    </div>
+  );
 }

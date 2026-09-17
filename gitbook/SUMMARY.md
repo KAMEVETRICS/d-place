@@ -9,7 +9,6 @@
 * [Files](files.md)
 * [Bounties](bounties.md)
 * [Payments](payments.md)
-* [Demo wallets](demo.md)
 * [Reports](reports.md)
 * [Limits](limits.md)
 * [Operators](operators.md)

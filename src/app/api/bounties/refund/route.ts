@@ -1,5 +1,5 @@
 import { run } from "@/db";
-import { verifyRefund } from "@/escrow";
+import { escrowAddress, verifyRefund } from "@/escrow";
 import { json, mustUser, readBody, str } from "@/http";
 import { bountyById } from "@/queries";
 import { txHashOk } from "@/validate";
@@ -19,10 +19,7 @@ export async function POST(req: Request) {
   if (!["open", "funding", "disputed", "payout_pending"].includes(bounty.state)) {
     return json({ error: "This bounty cannot be refunded." }, 400);
   }
-  const from =
-    process.env.ESCROW_ADDRESS && process.env.ESCROW_ADDRESS !== "demo:escrow"
-      ? process.env.ESCROW_ADDRESS
-      : auth.wallet;
+  const from = bounty.fundTx ? escrowAddress() : auth.wallet;
   const ok = await verifyRefund({
     bountyId,
     txHash,

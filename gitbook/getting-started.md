@@ -23,7 +23,7 @@ Inside Pay the injected provider:
 2. Signs login (`sign`)
 3. Sends NIM with a memo (`sendBasicTransactionWithData`)
 
-There is no Hub popup inside Pay. Demo Alice and Bob never appear in a Pay session.
+There is no Hub popup inside Pay.
 
 Open a Mini App from Pay with:
 
@@ -46,5 +46,3 @@ Until a username exists, the header says to pick one.
 ## Sign out
 
 Header door icon, or **Sign out** on Me. That clears the D place session on this browser. It does not empty the Nimiq wallet.
-
-On Me, a demo session can **Switch to Hub** to attach a real account.

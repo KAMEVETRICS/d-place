@@ -18,7 +18,7 @@ If the chain is slow, **Check the chain again**. A pending purchase is stored ag
 ## Who you cannot buy from
 
 - Your own listing. You already own it.
-- A **demo seller** (Alice, Bob, or any `demo:` address) while you are on a real NQ wallet. Real NIM cannot go to a name that is not an NQ address.
+- A listing whose seller is not an NQ address. Real NIM has to go to a Nimiq wallet.
 
 ## After you own it
 

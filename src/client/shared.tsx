@@ -39,7 +39,7 @@ export function hay(q: string, ...parts: string[]) {
 
 export function TxLink({ hash }: { hash: string }) {
   const href = explorerTx(hash);
-  if (!href) return <span className="meta">demo payment</span>;
+  if (!href) return null;
   return (
     <a href={href} target="_blank" rel="noreferrer">
       View on Nimiq Watch

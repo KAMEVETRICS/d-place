@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { FormEvent, useState, type Dispatch, type ReactNode, type SetStateAction } from "react";
 import type { BountyCard, PayoutRow, Submission } from "@/types";
-import { Banner, Empty, Field, Icon, Money, SearchField, Skeleton, formData } from "./ui";
+import { Banner, Empty, Field, FilePick, Icon, Money, SearchField, Skeleton, formData } from "./ui";
 import { PaidFile, Report, SaveButton, hay, useLoad } from "./shared";
 import { useSession } from "./session";
 import { type PayRequest } from "./wallet";
@@ -228,10 +228,7 @@ function OpenPanel({ ctx }: { ctx: BountyCtx }) {
       <h2>Submit work</h2>
       {!ctx.wallet ? <Banner kind="err">Wallet disconnected. Connect from the header.</Banner> : null}
       <Field name="assetUrl" label="Work link (or attach a file)" />
-      <label className="field">
-        <span>File</span>
-        <input type="file" />
-      </label>
+      <FilePick label="Attached file" />
       <Field name="note" label="What you delivered" textarea required maxLength={LIMIT.note} />
       <button className="btn" type="submit" disabled={!ctx.wallet}>
         <Icon name="send" />

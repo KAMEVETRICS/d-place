@@ -2,6 +2,8 @@
 
 Paid media lives under `data/files/` on the host. The stall sniffs bytes. It does not trust the browser’s content-type alone.
 
+On Create and on a bounty submit form, attach with **Attach file**. After a file is chosen, **Replace** and **Remove** sit next to the filename. There is no drop zone.
+
 ## Allowed types
 
 PDF, ZIP, plain text, Markdown, PNG, JPEG, WebP, MP4.

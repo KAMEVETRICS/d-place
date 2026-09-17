@@ -8,10 +8,6 @@ import { q, run } from "./db";
 const COOKIE = "dplace_session";
 const USERNAME = /^[a-z0-9_]{3,20}$/;
 
-export function demoEnabled() {
-  return process.env.DEMO_PAYMENTS === "1";
-}
-
 export function loginMessage(nonce: string) {
   return `D place login ${nonce}`;
 }
@@ -86,11 +82,6 @@ export async function profileFor(wallet: string) {
   return rows[0] ?? null;
 }
 
-export function demoWalletOk(wallet: string, signature: string) {
-  if (!demoEnabled()) return false;
-  return wallet.startsWith("demo:") && signature === `demo-sig:${wallet}`;
-}
-
 function fromHex(hex: string) {
   const clean = hex.startsWith("0x") ? hex.slice(2) : hex.replace(/\s+/g, "");
   if (!/^[0-9a-fA-F]+$/.test(clean) || clean.length % 2 !== 0) return null;
@@ -112,7 +103,6 @@ export async function verifyLogin(args: {
   signature: string;
   publicKey?: string;
 }) {
-  if (demoWalletOk(args.wallet, args.signature)) return true;
   const publicKey = fromHex(args.publicKey ?? "");
   const signature = fromHex(args.signature);
   if (!publicKey || publicKey.length !== 32 || !signature || signature.length !== 64) return false;

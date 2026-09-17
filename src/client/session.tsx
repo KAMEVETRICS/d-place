@@ -3,7 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { api, post } from "./api";
-import { demoHash, hubLogin, hubPay, inPay, sendNim, signInPay } from "./wallet";
+import { hubLogin, hubPay, inPay, sendNim, signInPay } from "./wallet";
 import type { LoginProof, PayRequest } from "./wallet";
 import type { Profile, Session } from "@/types";
 
@@ -12,7 +12,6 @@ type Boot = Session & { profile?: Profile | null; loading: boolean };
 type SessionApi = {
   wallet: string;
   username: string | null;
-  demo: boolean;
   loading: boolean;
   payHost: boolean;
   error: string;
@@ -21,7 +20,6 @@ type SessionApi = {
   pay: (req: PayRequest) => Promise<string>;
   connectPayOrHub: () => Promise<void>;
   signOut: () => Promise<void>;
-  useDemo: (who: "demo:alice" | "demo:bob") => Promise<void>;
 };
 
 const Ctx = createContext<SessionApi | null>(null);
@@ -36,7 +34,6 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Boot>({
     wallet: "",
     username: null,
-    demo: true,
     loading: true,
   });
   const [error, setError] = useState("");
@@ -92,41 +89,22 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   }, [refresh, path, router, connectPayOrHub]);
 
   const signOut = useCallback(async () => {
-    localStorage.removeItem("dplace.demo");
     await post("logout", {});
     await refresh();
   }, [refresh]);
 
-  const useDemo = useCallback(async (who: "demo:alice" | "demo:bob") => {
-    setError("");
-    setBusy("Connecting");
-    try {
-      localStorage.setItem("dplace.demo", who);
-      await post("logout", {});
-      const { nonce } = await api<{ nonce: string; message: string }>("challenge");
-      await post("session", { wallet: who, nonce, signature: `demo-sig:${who}` });
-      await refresh();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not connect.");
-    } finally {
-      setBusy("");
-    }
-  }, [refresh]);
-
   const pay = useCallback(
     async (req: PayRequest) => {
-      if (session.wallet.startsWith("demo:")) return demoHash(session.wallet, req);
       if (inPay()) return sendNim(req);
       return hubPay(req);
     },
-    [session.wallet],
+    [],
   );
 
   const value = useMemo<SessionApi>(
     () => ({
       wallet: session.wallet,
       username: session.username,
-      demo: session.demo,
       loading: session.loading,
       payHost,
       error,
@@ -135,9 +113,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       pay,
       connectPayOrHub,
       signOut,
-      useDemo,
     }),
-    [session, payHost, error, busy, refresh, pay, connectPayOrHub, signOut, useDemo],
+    [session, payHost, error, busy, refresh, pay, connectPayOrHub, signOut],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

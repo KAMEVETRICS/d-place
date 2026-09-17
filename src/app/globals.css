@@ -469,9 +469,9 @@ form.stack { gap: 24px; max-width: 36rem; }
 
 .pay-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 
-.field { display: grid; gap: 8px; }
+.field { display: grid; gap: 8px; position: relative; }
 .field span { font-size: 0.875rem; color: var(--ink); }
-.field input, .field textarea, .field select {
+.field input:not(.file-input), .field textarea, .field select {
   min-height: 44px;
   padding: 10px 12px;
   border: 1px solid var(--line);
@@ -489,6 +489,48 @@ form.stack { gap: 24px; max-width: 36rem; }
   padding-right: 40px;
 }
 .field input::placeholder, .field textarea::placeholder { color: var(--ink-2); }
+
+.file-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+.filepick-empty,
+.filepick-well {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+.filepick-empty .meta { flex: 1 1 180px; }
+.filepick-well {
+  padding: 8px 8px 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--cream);
+}
+.filepick-meta {
+  min-width: 0;
+  flex: 1 1 140px;
+}
+.filepick-meta strong {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.filepick-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-left: auto;
+}
 
 .search {
   display: grid;

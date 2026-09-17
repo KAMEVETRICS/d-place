@@ -16,7 +16,7 @@ Create → **Bounty**.
 | Prize | NIM, at least 0.01, at most 1,000,000 |
 | Deadline | Must be in the future |
 
-The host must have `ESCROW_ADDRESS` set (or `DEMO_PAYMENTS=1`, which uses `demo:escrow`). Otherwise create fails.
+The host must have `ESCROW_ADDRESS` set to a Nimiq address. Otherwise create fails.
 
 State after create: `funding`. Not on Shop or Bounties yet.
 

@@ -41,7 +41,7 @@ function NavLink({ href, label, icon, path }: { href: string; label: string; ico
 
 export function StallShell({ children }: { children: ReactNode }) {
   const path = usePathname();
-  const { wallet, username, loading, payHost, error, busy, connectPayOrHub, signOut, useDemo } = useSession();
+  const { wallet, username, loading, payHost, error, busy, connectPayOrHub, signOut } = useSession();
 
   if (loading) {
     return (
@@ -77,18 +77,6 @@ export function StallShell({ children }: { children: ReactNode }) {
             <Icon name="wallet" />
             {busy || (payHost ? "Use this Nimiq Pay wallet" : "Connect with Hub")}
           </button>
-          {!payHost ? (
-            <>
-              <button className="btn ghost" onClick={() => useDemo("demo:alice")} disabled={Boolean(busy)}>
-                <Icon name="person" />
-                Demo Alice
-              </button>
-              <button className="btn ghost" onClick={() => useDemo("demo:bob")} disabled={Boolean(busy)}>
-                <Icon name="person" />
-                Demo Bob
-              </button>
-            </>
-          ) : null}
         </div>
         {!payHost ? (
           <p className="meta">
@@ -102,7 +90,6 @@ export function StallShell({ children }: { children: ReactNode }) {
 
   const who = username ? `@${username}` : "friend";
   const initial = (username || "?").slice(0, 1).toUpperCase();
-  const demo = wallet.startsWith("demo:");
 
   return (
     <div className="shell">
@@ -151,7 +138,7 @@ export function StallShell({ children }: { children: ReactNode }) {
               </span>
               <span>
                 <strong>{username ? `@${username}` : "Set username"}</strong>
-                <small>{demo ? "Demo" : "Wallet"}</small>
+                <small>Wallet</small>
               </span>
             </Link>
             <button className="icon-btn ghost" onClick={signOut} disabled={Boolean(busy)} aria-label="Sign out">

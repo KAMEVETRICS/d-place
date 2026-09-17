@@ -4,7 +4,7 @@ A Nimiq Pay Mini App stall for knowledge and funded work. Paid in NIM.
 
 Username sits next to the wallet. Bounty owners pick how many winners.
 
-Live host: [deplace.space](https://deplace.space) (stall at `/app`). Handbook is in `gitbook/` for GitBook.
+Live host: [deplace.space](https://deplace.space) (stall at `/app`). Handbook is in `gitbook/`. GitBook Git Sync reads `gitbook-docs.yaml` at the repo root.
 
 ## Run
 
@@ -32,7 +32,7 @@ In a browser, Connect with Hub.
 
 ## Env
 
-See `.env.example`. `ESCROW_ADDRESS` is required for live bounties. `DEMO_PAYMENTS=1` allows Alice/Bob only outside Pay.
+See `.env.example`. `ESCROW_ADDRESS` is required for bounties.
 
 ## License
 

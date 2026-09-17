@@ -23,11 +23,8 @@ export async function POST(req: Request) {
   )[0];
   if (!item) return json({ error: "Listing not found." }, 404);
   if (item.creator_wallet === auth.wallet) return json({ error: "You already own your own listing." }, 400);
-  if (isNimiqAddress(auth.wallet) && !isNimiqAddress(item.creator_wallet)) {
-    return json(
-      { error: "This listing is a demo stall. Real NIM has to go to an NQ address. Publish one from your Hub wallet." },
-      400,
-    );
+  if (!isNimiqAddress(item.creator_wallet)) {
+    return json({ error: "This listing has no Nimiq address to pay." }, 400);
   }
   const existing = (
     await q<{ id: string; status: string }>("SELECT id, status FROM purchases WHERE tx_hash = ?", [txHash])

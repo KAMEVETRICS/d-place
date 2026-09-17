@@ -19,10 +19,13 @@ Copy `.env.example`.
 | Variable | Meaning |
 |---|---|
 | `NIMIQ_RPC` | Albatross RPC used to confirm payments. Default `https://rpc.nimiqwatch.com` |
-| `ESCROW_ADDRESS` | NQ address that receives bounty prizes. Required for live bounties when demo is off |
-| `DEMO_PAYMENTS` | `1` allows Alice/Bob outside Pay. Use `0` in public beta |
+| `ESCROW_ADDRESS` | NQ address that receives bounty prizes. Required for bounties |
 | `NEXT_PUBLIC_DOCS_URL` | GitBook URL for the in-app Docs button |
 | `NEXT_PUBLIC_SUPPORT_EMAIL` | Support mailbox for the Support page |
+
+## GitBook
+
+Git Sync creates the site from `gitbook-docs.yaml` at the repository root. That file maps the Handbook space to `./gitbook`. Keep `gitbook/.gitbook.yaml`, `gitbook/README.md`, and `gitbook/SUMMARY.md` in place.
 
 ## Mini App URL
 
@@ -51,7 +54,6 @@ Desktop login and checkout open Hub popups. The public origin must be HTTPS. All
 ## After go-live
 
 - Set `ESCROW_ADDRESS` to an NQ you control and can spend from for winner payouts and refunds
-- Set `DEMO_PAYMENTS=0`
 - Publish this GitBook and set `NEXT_PUBLIC_DOCS_URL`
 - Set `NEXT_PUBLIC_SUPPORT_EMAIL` when the mailbox exists
 - Delist any leftover duplicate live titles from early tests

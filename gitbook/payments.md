@@ -11,24 +11,24 @@ The stall verifies the transaction on the configured RPC. Pending hashes are sto
 
 ## Bounty fund
 
-- **To:** `ESCROW_ADDRESS` (or `demo:escrow` when demo payments are on and escrow is unset)
+- **To:** `ESCROW_ADDRESS`
 - **Memo:** `dplace:bounty:{id}`
 
 ## Bounty payout
 
-- **From:** escrow if it is a real NQ, otherwise the owner wallet in demo
+- **From:** escrow
 - **To:** winner
 - **Memo:** `dplace:payout:{id}`
 
 ## Bounty refund
 
-- **From:** escrow or owner (demo)
+- **From:** escrow
 - **To:** bounty owner
 - **Memo:** `dplace:refund:{id}`
 
 ## Explorer
 
-Real hashes link to `https://nimiq.watch/#{hash}`. Hashes that start with `demo:` have no explorer link.
+Confirmed hashes link to `https://nimiq.watch/#{hash}`.
 
 ## Closing Hub
 

@@ -82,7 +82,6 @@ export function ListingCard({ item, progress }: { item: ContentCard; progress?: 
           </span>
         ) : null}
         {item.owned ? <span className="badge quiet">In your library</span> : null}
-        {!isNimiqAddress(item.creatorWallet) ? <span className="kicker">Demo seller</span> : null}
       </div>
       <div className="card-foot">
         <SaveButton kind="content" id={item.id} saved={item.saved} />
@@ -207,8 +206,6 @@ export function Listing({ id }: { id: string }) {
   if (loading) return <Skeleton label="Opening listing" />;
   if (error || !item) return <Banner kind="err">{error || "Missing listing."}</Banner>;
   const related = data?.relatedBounties ?? [];
-  const demoSeller = !isNimiqAddress(item.creatorWallet);
-  const realBuyer = Boolean(wallet) && isNimiqAddress(wallet);
   return (
     <div className="stack page">
       <div className="page-head">
@@ -219,7 +216,6 @@ export function Listing({ id }: { id: string }) {
       </div>
       <div className="kicker">
         {item.type} · {categoryLabel(item.category)}
-        {demoSeller ? " · demo seller" : ""}
       </div>
       <h1>{item.title}</h1>
       <p>
@@ -229,12 +225,6 @@ export function Listing({ id }: { id: string }) {
         <Money luna={item.priceLuna} />
       </div>
       <p>{item.description}</p>
-      {demoSeller ? (
-        <Banner>
-          @{item.creatorUsername} is a seeded demo account, not an NQ wallet. Real NIM cannot be sent here.
-          Publish a listing from your Hub wallet to receive NIM, or sign out and use Demo Bob to walk the fake loop.
-        </Banner>
-      ) : null}
       <section className="stack">
         <h2>Preview</h2>
         <div className="well">
@@ -285,26 +275,24 @@ export function Listing({ id }: { id: string }) {
           {flow.status && flow.status !== "failed" ? <Banner>{flow.status}</Banner> : null}
           {flow.err ? <Banner kind="err">{flow.err}</Banner> : null}
           {flow.hash ? <TxLink hash={flow.hash} /> : null}
-          {demoSeller && realBuyer ? null : (
-            <PayBar
-              icon="lock"
-              idle="Unlock with NIM"
-              armedLabel={`Pay ${formatNim(item.priceLuna)}`}
-              armed={flow.armed}
-              disabled={!wallet}
-              waiting={flow.waiting}
-              onIdle={flow.arm}
-              onPay={() =>
-                void flow.run({
-                  recipient: item.creatorWallet,
-                  amountLuna: item.priceLuna,
-                  memo: `dplace:content:${item.id}`,
-                })
-              }
-              onBack={flow.disarm}
-              onRetry={flow.retry}
-            />
-          )}
+          <PayBar
+            icon="lock"
+            idle="Unlock with NIM"
+            armedLabel={`Pay ${formatNim(item.priceLuna)}`}
+            armed={flow.armed}
+            disabled={!wallet}
+            waiting={flow.waiting}
+            onIdle={flow.arm}
+            onPay={() =>
+              void flow.run({
+                recipient: item.creatorWallet,
+                amountLuna: item.priceLuna,
+                memo: `dplace:content:${item.id}`,
+              })
+            }
+            onBack={flow.disarm}
+            onRetry={flow.retry}
+          />
         </div>
       )}
       {related.length ? (

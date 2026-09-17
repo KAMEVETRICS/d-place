@@ -11,10 +11,6 @@ export type ChainTx = {
 
 const DEFAULT_RPC = "https://rpc.nimiqwatch.com";
 
-function demoAllowed() {
-  return process.env.DEMO_PAYMENTS === "1";
-}
-
 function rpcUrl() {
   return process.env.NIMIQ_RPC || DEFAULT_RPC;
 }
@@ -92,14 +88,6 @@ async function fetchByHash(hash: string): Promise<ChainTx | null> {
 }
 
 export async function getTransaction(hashOrRaw: string): Promise<ChainTx | null> {
-  if (hashOrRaw.startsWith("demo:")) {
-    if (!demoAllowed()) return null;
-    const packed = hashOrRaw.slice("demo:".length).split("~");
-    if (packed.length !== 4) return null;
-    const [from, to, value, data] = packed.map(decodeURIComponent);
-    return { hash: hashOrRaw, from, to, value: Number(value), data };
-  }
-
   const hash = looksLikeHash(hashOrRaw)
     ? hashOrRaw
     : [...blake2b(hexToBytes(hashOrRaw) ?? new TextEncoder().encode(hashOrRaw), { dkLen: 32 })]

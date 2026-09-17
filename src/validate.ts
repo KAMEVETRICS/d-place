@@ -46,6 +46,6 @@ export function winnersCap(n: number) {
 }
 
 export function txHashOk(hash: string) {
-  if (!hash || hash.length > LIMIT.txHash) return "Missing or invalid transaction hash.";
+  if (!hash || hash.length > LIMIT.txHash || hash.startsWith("demo:")) return "Missing or invalid transaction hash.";
   return null;
 }

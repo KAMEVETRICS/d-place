@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 import type { BountyCard, ContentCard, Profile, SaleRow, StallStats } from "@/types";
-import { Banner, Empty, Field, Icon, Money, Skeleton, formData } from "./ui";
+import { Banner, Empty, Field, FilePick, Icon, Money, Skeleton, formData } from "./ui";
 import { BountyTeaser } from "./bounties";
 import { ListingCard, ListingsByCategory } from "./listings";
 import { useLoad } from "./shared";
@@ -112,10 +112,7 @@ export function Create() {
           <Field name="preview" label="Free preview" textarea required maxLength={LIMIT.preview} />
           <Field name="body" label="Paid body" textarea required maxLength={LIMIT.body} />
           <Field name="priceNim" label="Price in NIM" type="number" min={0} max={LIMIT.nim} step={0.01} required defaultValue={250} />
-          <label className="field">
-            <span>Private file (unlocked after purchase)</span>
-            <input type="file" name="file" />
-          </label>
+          <FilePick label="Private file (unlocked after purchase)" />
           <button className="btn" type="submit">
             <Icon name="paper" />
             Publish listing
@@ -213,7 +210,7 @@ export function Library() {
 }
 
 export function Me() {
-  const { signOut, connectPayOrHub, busy } = useSession();
+  const { signOut } = useSession();
   const { data, error, loading } = useLoad<{
     wallet: string;
     username: string | null;
@@ -257,22 +254,15 @@ export function Me() {
   }
   const p = data.profile;
   if (error || !p) return <Banner kind="err">{error || "Missing profile."}</Banner>;
-  const demo = data.wallet.startsWith("demo:");
   return (
     <div className="stack page">
       <div>
         <h1>@{p.username}</h1>
         <p>{p.displayName}</p>
         <p>{p.bio || "No bio yet."}</p>
-        <p className="meta">{demo ? "Demo wallet. Sign out, then Connect with Hub for real NIM." : data.wallet}</p>
+        <p className="meta">{data.wallet}</p>
       </div>
       <div className="row actions">
-        {demo ? (
-          <button className="btn gold" onClick={connectPayOrHub} disabled={Boolean(busy)}>
-            <Icon name="wallet" />
-            {busy || "Switch to Hub"}
-          </button>
-        ) : null}
         <button className="btn ghost" onClick={signOut}>
           <Icon name="out" />
           Sign out

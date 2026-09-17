@@ -1,10 +1,10 @@
 # Support
 
-For stall problems (locked listing after a confirmed pay, Hub closed, demo vs real NIM), first try:
+For stall problems (locked listing after a confirmed pay, Hub closed), first try:
 
 1. Open the listing and **Check the chain again**
 2. Confirm the receipt hash on [nimiq.watch](https://nimiq.watch)
-3. Confirm you are not buying a **demo seller** with a real wallet
+3. Confirm the seller’s address on the listing is the NQ you paid
 
 Reports of bad listings: use **Send report** on the listing itself.
 

@@ -15,7 +15,6 @@ export type FundIntent = {
 export function escrowAddress() {
   const address = process.env.ESCROW_ADDRESS;
   if (address) return address;
-  if (process.env.DEMO_PAYMENTS === "1") return "demo:escrow";
   throw new Error("ESCROW_ADDRESS is not set");
 }
 

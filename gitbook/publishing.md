@@ -18,7 +18,7 @@ Create → **Listing**. You need a username.
 | Body | Paid text, 20,000 |
 | Category | One of the stall categories |
 | Price | NIM, 0 up to 1,000,000 |
-| File | Optional. Must already be yours. See [Files](files.md) |
+| File | Optional. Attach with the file buttons on Create. See [Files](files.md) |
 
 Price 0 is allowed. It still creates an entitlement when someone “unlocks” it, and the chain check still expects a matching transaction of 0 luna only if you go through pay. Prefer a real price for paid work.
 

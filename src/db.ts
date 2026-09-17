@@ -1,5 +1,5 @@
 import { createClient, type InValue } from "@libsql/client";
-import { mkdirSync } from "node:fs";
+import { existsSync, mkdirSync, unlinkSync } from "node:fs";
 import path from "node:path";
 
 const dataDir = path.join(process.cwd(), "data");
@@ -139,7 +139,7 @@ export async function migrate() {
   `);
   await addColumn("content", "file_id", "TEXT");
   await addColumn("submissions", "file_id", "TEXT");
-  await seed();
+  await dropDemo();
 }
 
 async function addColumn(table: string, name: string, type: string) {
@@ -150,31 +150,26 @@ async function addColumn(table: string, name: string, type: string) {
   }
 }
 
-async function seed() {
-  const existing = await q<{ n: number }>("SELECT COUNT(*) AS n FROM content WHERE id = ?", [
-    "seed-course-data",
-  ]);
-  if (Number(existing[0]?.n)) return;
-  const now = Date.now();
-  await run(
-    "INSERT OR IGNORE INTO profiles (wallet, username, display_name, bio, created_at) VALUES (?, ?, ?, ?, ?)",
-    ["demo:alice", "alice", "Alice", "Teaches data analysis.", now],
-  );
-  await run(
-    "INSERT OR IGNORE INTO profiles (wallet, username, display_name, bio, created_at) VALUES (?, ?, ?, ?, ?)",
-    ["demo:bob", "bob", "Bob", "Learning in public.", now],
-  );
-  await run(
-    `INSERT OR IGNORE INTO content (id, creator_wallet, type, title, description, category, price_luna, preview, body, status, created_at)
-     VALUES (?, 'demo:alice', 'course', 'Intro to Data Analysis', 'Read a table, ask a question, write the answer.', 'data', 25000000, 'Module 1 is free: what a dataset even is.', 'Module 1. Open the CSV. Count the rows. Write one question the data can answer.', 'live', ?)`,
-    ["seed-course-data", now],
-  );
-  const deadline = now + 7 * 86400000;
-  await run(
-    `INSERT OR IGNORE INTO bounties (id, sponsor_wallet, title, brief, category, deliverables, winner_count, reward_luna, deadline, escrow_ref, fund_tx, state, created_at)
-     VALUES (?, 'demo:alice', 'Analyze this dataset', 'Produce a one-page analysis of the attached sample.', 'data', 'A short write-up with one chart description.', 2, 150000000, ?, 'demo:escrow', 'demo:seed-fund', 'open', ?)`,
-    ["seed-bounty-data", deadline, now],
-  );
+async function dropDemo() {
+  const doomed = await q<{ id: string }>("SELECT id FROM files WHERE owner_wallet LIKE 'demo:%'");
+  await run("DELETE FROM entitlements WHERE wallet LIKE 'demo:%' OR content_id IN (SELECT id FROM content WHERE creator_wallet LIKE 'demo:%' OR id LIKE 'seed-%')");
+  await run("DELETE FROM purchases WHERE buyer_wallet LIKE 'demo:%' OR content_id IN (SELECT id FROM content WHERE creator_wallet LIKE 'demo:%' OR id LIKE 'seed-%')");
+  await run("DELETE FROM progress WHERE wallet LIKE 'demo:%' OR content_id IN (SELECT id FROM content WHERE creator_wallet LIKE 'demo:%' OR id LIKE 'seed-%')");
+  await run("DELETE FROM reviews WHERE reviewer_wallet LIKE 'demo:%' OR target_id LIKE 'seed-%'");
+  await run("DELETE FROM saves WHERE wallet LIKE 'demo:%' OR target_id LIKE 'seed-%'");
+  await run("DELETE FROM submissions WHERE submitter_wallet LIKE 'demo:%' OR bounty_id IN (SELECT id FROM bounties WHERE sponsor_wallet LIKE 'demo:%' OR id LIKE 'seed-%')");
+  await run("DELETE FROM payouts WHERE recipient_wallet LIKE 'demo:%' OR bounty_id IN (SELECT id FROM bounties WHERE sponsor_wallet LIKE 'demo:%' OR id LIKE 'seed-%')");
+  await run("DELETE FROM reports WHERE reporter_wallet LIKE 'demo:%' OR target_id LIKE 'seed-%'");
+  await run("DELETE FROM files WHERE owner_wallet LIKE 'demo:%'");
+  await run("DELETE FROM content WHERE creator_wallet LIKE 'demo:%' OR id LIKE 'seed-%'");
+  await run("DELETE FROM bounties WHERE sponsor_wallet LIKE 'demo:%' OR id LIKE 'seed-%'");
+  await run("DELETE FROM sessions WHERE wallet LIKE 'demo:%'");
+  await run("DELETE FROM profiles WHERE wallet LIKE 'demo:%'");
+  const filesDir = path.join(dataDir, "files");
+  for (const row of doomed) {
+    const p = path.join(filesDir, row.id);
+    if (existsSync(p)) unlinkSync(p);
+  }
 }
 
 export async function q<T>(sql: string, args: InValue[] = []) {

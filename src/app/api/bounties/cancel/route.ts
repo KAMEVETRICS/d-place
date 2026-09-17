@@ -1,4 +1,5 @@
 import { run } from "@/db";
+import { escrowAddress } from "@/escrow";
 import { json, mustUser, readBody, str } from "@/http";
 import { bountyById } from "@/queries";
 
@@ -26,7 +27,7 @@ export async function POST(req: Request) {
       recipient: bounty.sponsorWallet,
       amountLuna: bounty.rewardLuna,
       memo: `dplace:refund:${bountyId}`,
-      from: process.env.ESCROW_ADDRESS ?? "demo:escrow",
+      from: escrowAddress(),
     },
   });
 }
