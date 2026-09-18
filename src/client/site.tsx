@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Icon, type IconName } from "./ui";
 
-const DOCS = process.env.NEXT_PUBLIC_DOCS_URL ?? "";
+const DOCS = process.env.NEXT_PUBLIC_DOCS_URL || "https://docs.deplace.space";
 const MAIL = process.env.NEXT_PUBLIC_SUPPORT_EMAIL ?? "";
 
 function reduceMotion() {
@@ -129,18 +129,11 @@ export function Docs() {
       <main id="main" className="site-main doc">
         <h1>Docs</h1>
         <p className="lede">The handbook lives on GitBook. This page only points there.</p>
-        {DOCS ? (
-          <p>
-            <a className="btn gold" href={DOCS} rel="noreferrer">
-              Open GitBook
-            </a>
-          </p>
-        ) : (
-          <p>
-            Upload the gitbook folder in this repo to GitBook, then set NEXT_PUBLIC_DOCS_URL on the host. Until that
-            URL exists, use the markdown in gitbook/.
-          </p>
-        )}
+        <p>
+          <a className="btn gold" href={DOCS} rel="noreferrer">
+            Open handbook
+          </a>
+        </p>
       </main>
       <footer className="site-foot">
         <Link href="/">Home</Link>

@@ -20,22 +20,33 @@ Copy `.env.example`.
 |---|---|
 | `NIMIQ_RPC` | Albatross RPC used to confirm payments. Default `https://rpc.nimiqwatch.com` |
 | `ESCROW_ADDRESS` | NQ address that receives bounty prizes. Required for bounties |
-| `NEXT_PUBLIC_DOCS_URL` | GitBook URL for the in-app Docs button |
+| `NEXT_PUBLIC_DOCS_URL` | Published handbook. Live value: `https://docs.deplace.space` |
 | `NEXT_PUBLIC_SUPPORT_EMAIL` | Support mailbox for the Support page |
 
 ## GitBook
 
 Git Sync creates the site from `gitbook-docs.yaml` at the repository root. That file maps the Handbook space to `./gitbook`. Keep `gitbook/.gitbook.yaml`, `gitbook/README.md`, and `gitbook/SUMMARY.md` in place.
 
+Published site: [docs.deplace.space](https://docs.deplace.space). That hostname is owned by GitBook DNS, not this VPS.
+
 ## Mini App URL
 
-Point Nimiq Pay at:
+Point Nimiq Pay at the app host:
 
 ```
-https://YOUR_DOMAIN/app
+https://app.deplace.space/app
 ```
 
-Landing stays at `https://YOUR_DOMAIN/`. Inside Pay, `/` redirects to `/app`.
+Landing stays at `https://deplace.space/`. Inside Pay, `/` redirects to `/app`.
+
+### App subdomain checklist
+
+1. DNS at your registrar for `deplace.space`:
+   - `A` record: `app` → VPS IPv4 (`169.58.20.173`)
+   - Optional `AAAA` record: `app` → VPS IPv6
+2. Reverse proxy (Caddy) serves `app.deplace.space` to the same Next process as the apex.
+3. Rebuild after setting `NEXT_PUBLIC_*` env values. Those are baked in at build time.
+4. Register the Mini App URL in Nimiq Pay as `https://app.deplace.space/app`.
 
 ## Process
 
@@ -54,6 +65,7 @@ Desktop login and checkout open Hub popups. The public origin must be HTTPS. All
 ## After go-live
 
 - Set `ESCROW_ADDRESS` to an NQ you control and can spend from for winner payouts and refunds
-- Publish this GitBook and set `NEXT_PUBLIC_DOCS_URL`
+- Keep `NEXT_PUBLIC_DOCS_URL=https://docs.deplace.space`
+- Point `app.deplace.space` DNS at the VPS and register that Mini App URL in Pay
 - Set `NEXT_PUBLIC_SUPPORT_EMAIL` when the mailbox exists
 - Delist any leftover duplicate live titles from early tests
