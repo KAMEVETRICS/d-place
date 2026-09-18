@@ -59,8 +59,7 @@ export function Landing() {
           </span>
           <h1>A stall for knowledge. Paid in NIM.</h1>
           <p className="lede">
-            D place is a Nimiq Pay Mini App. Unlock a listing, publish what you know, or fund a job. Username sits next
-            to the wallet. The owner of a bounty picks how many winners.
+            D place is a Nimiq Pay Mini App. Unlock a listing, publish what you know, or fund a job.
           </p>
           <div className="row">
             <button className="btn gold" type="button" onClick={() => openApp(router)}>
