@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { Icon, type IconName } from "./ui";
 import { useSession } from "./session";
+import { BackHome } from "./site";
 
 const STALL: { href: string; label: string; icon: IconName }[] = [
   { href: "/app", label: "Shop", icon: "shop" },
@@ -46,14 +47,16 @@ export function StallShell({ children }: { children: ReactNode }) {
   if (loading) {
     return (
       <div className="intro boot" role="status">
-        <span className="intro-mark" aria-hidden>
-          D
-        </span>
-        <span className="stamp" aria-hidden>
-          D
-        </span>
-        <h1>D place</h1>
-        <p className="lede">Opening the stall…</p>
+        <header className="intro-top">
+          <span className="stamp" aria-hidden>
+            D
+          </span>
+        </header>
+        <div className="intro-center">
+          <h1>D place</h1>
+          <p className="lede">Opening the stall…</p>
+        </div>
+        <BackHome />
       </div>
     );
   }
@@ -61,29 +64,31 @@ export function StallShell({ children }: { children: ReactNode }) {
   if (!wallet) {
     return (
       <div className="intro">
-        <span className="intro-mark" aria-hidden>
-          D
-        </span>
-        <span className="stamp" aria-hidden>
-          D
-        </span>
-        <h1>Knowledge for NIM.</h1>
-        <p className="lede">
-          A stall inside your wallet. Unlock a listing, publish what you know, or fund a job.
-        </p>
-        {error ? <p className="banner err">{error}</p> : null}
-        <div className="intro-actions">
-          <button className="btn gold" onClick={connectPayOrHub} disabled={Boolean(busy)}>
-            <Icon name="wallet" />
-            {busy || (payHost ? "Use this Nimiq Pay wallet" : "Connect with Hub")}
-          </button>
+        <header className="intro-top">
+          <span className="stamp" aria-hidden>
+            D
+          </span>
+        </header>
+        <div className="intro-center">
+          <h1 className="intro-hero">
+            Knowledge for <span className="accent">NIM</span>
+          </h1>
+          <p className="lede">A stall inside your wallet. Unlock a listing, publish what you know, or fund a job.</p>
+          {error ? <p className="banner err">{error}</p> : null}
+          <div className="intro-actions">
+            <button className="btn gold" onClick={connectPayOrHub} disabled={Boolean(busy)}>
+              <Icon name="wallet" />
+              {busy || (payHost ? "Use this Nimiq Pay wallet" : "Connect with Hub")}
+            </button>
+          </div>
+          {!payHost ? (
+            <p className="meta">
+              Connect with Hub opens a popup. Allow it, pick or create a Nimiq account, then sign in. Get NIM at
+              wallet.nimiq.com if the account is empty.
+            </p>
+          ) : null}
         </div>
-        {!payHost ? (
-          <p className="meta">
-            Connect with Hub opens a popup. Allow it, pick or create a Nimiq account, then sign in.
-            Get NIM at wallet.nimiq.com if the account is empty.
-          </p>
-        ) : null}
+        <BackHome />
       </div>
     );
   }
