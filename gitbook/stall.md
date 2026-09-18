@@ -4,7 +4,7 @@ The stall is the Mini App after Open app.
 
 ## Shop
 
-`/app`. The counter.
+`https://app.deplace.space`. The counter. `/app` on that host redirects to `/`.
 
 1. **Open prizes** — bounties that are funded and public
 2. **On the stall** — live listings, grouped by category

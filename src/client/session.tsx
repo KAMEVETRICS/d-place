@@ -25,7 +25,7 @@ type SessionApi = {
 const Ctx = createContext<SessionApi | null>(null);
 
 function isSite(path: string) {
-  return path === "/" || path === "/docs" || path === "/support" || path === "/open";
+  return path === "/docs" || path === "/support" || path === "/open";
 }
 
 export function SessionProvider({ children }: { children: ReactNode }) {
@@ -76,7 +76,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     booted.current = true;
     const hosted = inPay();
     setPayHost(hosted);
-    if (hosted && isSite(path)) router.replace("/app");
+    if (hosted && isSite(path)) router.replace("/");
     refresh()
       .then(async (s) => {
         if (!hosted || s.wallet) return;

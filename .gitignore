@@ -11,4 +11,6 @@ data
 tsconfig.tsbuildinfo
 brand/thumbnail.png
 brand/thumbnail.svg
+brand/demo.mp4
+brand/demo/
 

@@ -3,7 +3,7 @@
 ## Browser (Nimiq Hub)
 
 1. Open the landing page and choose **Open app**.
-2. You can Skip the intro. The stall is at `/app`.
+2. You can Skip the intro. The stall is at `app.deplace.space`.
 3. Choose **Connect with Hub**. Allow the popup.
 4. Pick or create a Nimiq account.
 5. Sign the login message. D place checks the signature and that the public key maps to that NQ address.
@@ -15,7 +15,7 @@ Closing Hub without signing is not a payment. Nothing leaves the wallet.
 
 ## Nimiq Pay
 
-Register the stall host as a Mini App. Pay should load `/app`.
+Register the stall host as a Mini App. Pay should load `https://app.deplace.space`.
 
 Inside Pay the injected provider:
 
@@ -28,8 +28,8 @@ There is no Hub popup inside Pay.
 Open a Mini App from Pay with:
 
 ```
-nimiqpay://miniapp?url=https://YOUR_DOMAIN/app
-https://nimpay.app/miniapps/open/https://YOUR_DOMAIN/app
+nimiqpay://miniapp?url=https://app.deplace.space
+https://nimpay.app/miniapps/open/https://app.deplace.space
 ```
 
 Use HTTPS. Hub and Pay will not treat a plain `http://` host as a production Mini App.

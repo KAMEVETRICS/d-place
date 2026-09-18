@@ -23,7 +23,7 @@ const nextConfig: NextConfig = {
       ["deplace.space", "www.deplace.space"].map((host) => ({
         source,
         has: [{ type: "host" as const, value: host }],
-        destination: `${APP_ORIGIN}${source}`,
+        destination: source === "/app" ? `${APP_ORIGIN}/` : `${APP_ORIGIN}${source}`,
         permanent: false,
       })),
     );

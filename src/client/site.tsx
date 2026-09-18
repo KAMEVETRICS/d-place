@@ -9,29 +9,16 @@ const APP = (process.env.NEXT_PUBLIC_APP_URL || "https://app.deplace.space").rep
 const LANDING = "https://deplace.space";
 const MAIL = process.env.NEXT_PUBLIC_SUPPORT_EMAIL ?? "";
 
-function reduceMotion() {
-  return typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-}
-
 function onAppHost() {
   return typeof window !== "undefined" && window.location.origin === APP;
 }
 
-export function openApp(router: ReturnType<typeof useRouter>) {
-  const path = reduceMotion() ? "/app" : "/open";
-  if (onAppHost()) {
-    router.push(path);
-    return;
-  }
-  window.location.assign(`${APP}${path}`);
-}
-
 function enterStall(router: ReturnType<typeof useRouter>) {
   if (onAppHost()) {
-    router.push("/app");
+    router.push("/");
     return;
   }
-  window.location.assign(`${APP}/app`);
+  window.location.assign(`${APP}/`);
 }
 
 export function BackHome() {
@@ -44,7 +31,6 @@ export function BackHome() {
 }
 
 function SiteBar() {
-  const router = useRouter();
   return (
     <header className="site-bar">
       <a className="brand" href={LANDING}>
@@ -54,10 +40,10 @@ function SiteBar() {
         <span className="wordmark">D place</span>
       </a>
       <nav className="site-links" aria-label="Site">
-        <button className="site-link-btn" type="button" onClick={() => openApp(router)}>
+        <a className="site-link-btn" href={APP} target="_blank" rel="noreferrer">
           Stall
-        </button>
-        <a href={DOCS} rel="noreferrer">
+        </a>
+        <a href={DOCS} target="_blank" rel="noreferrer">
           Docs
         </a>
         <Link href="/support">Support</Link>
@@ -94,7 +80,6 @@ function PhonePreview() {
 }
 
 export function Landing() {
-  const router = useRouter();
   return (
     <div className="site site-landing">
       <a className="skip" href="#main">
@@ -117,11 +102,11 @@ export function Landing() {
             </div>
             <PhonePreview />
             <div className="site-hero-actions row">
-              <button className="btn gold" type="button" onClick={() => openApp(router)}>
+              <a className="btn gold" href={APP} target="_blank" rel="noreferrer">
                 <Icon name="shop" />
                 The Stall
-              </button>
-              <a className="btn ghost" href={DOCS} rel="noreferrer">
+              </a>
+              <a className="btn ghost" href={DOCS} target="_blank" rel="noreferrer">
                 <Icon name="paper" />
                 Read the docs
               </a>
@@ -153,11 +138,13 @@ export function Landing() {
           </section>
         </main>
         <footer className="site-foot">
-          <a href={DOCS} rel="noreferrer">
+          <a href={DOCS} target="_blank" rel="noreferrer">
             Docs
           </a>
           <Link href="/support">Support</Link>
-          <a href={`${APP}/app`}>Stall</a>
+          <a href={APP} target="_blank" rel="noreferrer">
+            Stall
+          </a>
         </footer>
       </div>
     </div>
@@ -243,7 +230,7 @@ export function Docs() {
           </div>
         </div>
         <p>
-          <a className="btn gold" href={DOCS} rel="noreferrer">
+          <a className="btn gold" href={DOCS} target="_blank" rel="noreferrer">
             Full handbook
           </a>
         </p>
@@ -340,7 +327,7 @@ export function Support() {
         </div>
       </main>
       <footer className="site-foot">
-        <a href={DOCS} rel="noreferrer">
+        <a href={DOCS} target="_blank" rel="noreferrer">
           Docs
         </a>
       </footer>

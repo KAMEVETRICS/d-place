@@ -12,7 +12,7 @@ You list a course, guide, or template. A buyer pays the listed NIM from their wa
 | Open app in a browser | Desktop, Hub wallet | Connect with Hub, then sign a login message |
 | Mini App inside Nimiq Pay | Phone wallet | Pay injects the account. There is no Hub popup |
 
-Nimiq Pay should open the stall URL (`/app`), not the public landing page.
+Nimiq Pay should open the stall host (`https://app.deplace.space`), not the public landing page.
 
 ## Public pages vs the stall
 
@@ -22,7 +22,7 @@ Nimiq Pay should open the stall URL (`/app`), not the public landing page.
 | `/open` | Short intro after Open app. Skip is allowed |
 | `/docs` | Pointer to this GitBook |
 | `/support` | How to reach us |
-| `/app` | Shop. The Mini App root |
+| `app.deplace.space` | Shop. The Mini App root |
 | `/learn` | Listings only |
 | `/bounties` | Funded jobs |
 | `/create` | New listing or bounty |

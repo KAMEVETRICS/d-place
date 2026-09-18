@@ -8,7 +8,7 @@ import { useSession } from "./session";
 import { BackHome } from "./site";
 
 const STALL: { href: string; label: string; icon: IconName }[] = [
-  { href: "/app", label: "Shop", icon: "shop" },
+  { href: "/", label: "Shop", icon: "shop" },
   { href: "/learn", label: "Listings", icon: "listings" },
   { href: "/bounties", label: "Bounties", icon: "bounties" },
 ];
@@ -19,7 +19,7 @@ const YOU: { href: string; label: string; icon: IconName }[] = [
   { href: "/me", label: "Me", icon: "me" },
 ];
 const DOCK: { href: string; label: string; icon: IconName }[] = [
-  { href: "/app", label: "Shop", icon: "shop" },
+  { href: "/", label: "Shop", icon: "shop" },
   { href: "/bounties", label: "Bounties", icon: "bounties" },
   { href: "/create", label: "Create", icon: "create" },
   { href: "/library", label: "Library", icon: "library" },
@@ -27,7 +27,7 @@ const DOCK: { href: string; label: string; icon: IconName }[] = [
 ];
 
 function onPath(href: string, path: string) {
-  if (href === "/app") return path === "/app";
+  if (href === "/") return path === "/" || path === "/app";
   return path === href || path.startsWith(`${href}/`);
 }
 
@@ -102,7 +102,7 @@ export function StallShell({ children }: { children: ReactNode }) {
         Skip to content
       </a>
       <aside className="side">
-        <Link className="brand" href="/app">
+        <Link className="brand" href="/">
           <span className="stamp" aria-hidden>
             D
           </span>
@@ -122,7 +122,7 @@ export function StallShell({ children }: { children: ReactNode }) {
         </nav>
       </aside>
       <header className="top">
-        <Link className="brand phone-brand" href="/app">
+        <Link className="brand phone-brand" href="/">
           <span className="stamp" aria-hidden>
             D
           </span>

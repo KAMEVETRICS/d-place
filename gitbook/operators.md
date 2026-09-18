@@ -35,10 +35,10 @@ Published site: [docs.deplace.space](https://docs.deplace.space). That hostname 
 Point Nimiq Pay at the app host:
 
 ```
-https://app.deplace.space/app
+https://app.deplace.space
 ```
 
-Landing stays at `https://deplace.space/`. Inside Pay, `/` redirects to `/app`.
+Landing stays at `https://deplace.space/`. The Mini App root is `https://app.deplace.space/` (shop). `/app` on that host redirects to `/`.
 
 ### App subdomain checklist
 
@@ -47,7 +47,7 @@ Landing stays at `https://deplace.space/`. Inside Pay, `/` redirects to `/app`.
    - Optional `AAAA` record: `app` → VPS IPv6
 2. Reverse proxy (Caddy) serves `app.deplace.space` to the same Next process as the apex.
 3. Rebuild after setting `NEXT_PUBLIC_*` env values. Those are baked in at build time.
-4. Register the Mini App URL in Nimiq Pay as `https://app.deplace.space/app`.
+4. Register the Mini App URL in Nimiq Pay as `https://app.deplace.space`.
 
 ## Process
 
