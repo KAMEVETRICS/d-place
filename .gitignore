@@ -9,4 +9,6 @@ data
 .claude
 .grok
 tsconfig.tsbuildinfo
+brand/thumbnail.png
+brand/thumbnail.svg
 

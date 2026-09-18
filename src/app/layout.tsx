@@ -9,6 +9,10 @@ const sans = Source_Sans_3({ subsets: ["latin"], variable: "--font-sans" });
 export const metadata: Metadata = {
   title: "D place",
   description: "A Nimiq stall for knowledge, bounties, and NIM payouts.",
+  icons: {
+    icon: [{ url: "/icon.png", type: "image/png" }],
+    apple: [{ url: "/apple-icon.png", type: "image/png" }],
+  },
 };
 
 export const viewport: Viewport = {
