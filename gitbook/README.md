@@ -4,13 +4,6 @@ D place is a stall for knowledge, paid in NIM. It runs as a [Nimiq Pay](https://
 
 You list a course, guide, or template. A buyer pays the listed NIM from their wallet. The file unlocks in the browser and stays in their library. You can also fund a bounty: the prize must sit in escrow before the job is public. You choose how many winners to pay.
 
-This handbook matches the product as it ships. It is for people who use the stall and for whoever hosts it.
-
-## What D place is not
-
-- Not a custodial exchange. Listing payments go to the seller’s Nimiq address. Bounty prizes go to an escrow address you configure, then out to winners.
-- Not a social network. Identity is a Nimiq wallet plus a username you pick once.
-- Not a place to send NIM to a name that is not an NQ address. Listing payments go to the seller’s wallet.
 
 ## Two doors
 
@@ -39,7 +32,7 @@ Nimiq Pay should open the stall URL (`/app`), not the public landing page.
 
 ## NIM
 
-1 NIM = 100,000 luna. Prices on the stall are shown in NIM. On chain they move as luna.
+ $NIM is the native currency of nimiq. Prices on the stall are shown in NIM. 
 
 Confirmed transactions are checked against a public Albatross RPC (default `https://rpc.nimiqwatch.com`). A receipt on a listing links to [nimiq.watch](https://nimiq.watch) when the hash is a real chain transaction.
 
