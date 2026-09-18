@@ -9,7 +9,6 @@ import { PaidFile, Report, SaveButton, TxLink, hay, useLoad } from "./shared";
 import { useSession } from "./session";
 import { PayBar, usePayFlow } from "./pay";
 import { formatNim } from "@/money";
-import { isNimiqAddress } from "@/address";
 import { categoryLabel, groupByCategory } from "@/categories";
 import { post } from "./api";
 
@@ -267,8 +266,7 @@ export function Listing({ id }: { id: string }) {
           {!wallet ? <Banner kind="err">Wallet disconnected. Connect from the header to pay.</Banner> : null}
           {flow.armed && !flow.status ? (
             <Banner>
-              You will pay {formatNim(item.priceLuna)} to @{item.creatorUsername}
-              {isNimiqAddress(item.creatorWallet) ? ` (${item.creatorWallet})` : ""}. Hub opens a popup; allow it.
+              You will pay {formatNim(item.priceLuna)} to @{item.creatorUsername}. Hub opens a popup; allow it.
               NIM goes to that wallet, not to D place.
             </Banner>
           ) : null}
