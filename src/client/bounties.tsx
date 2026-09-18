@@ -58,7 +58,7 @@ export function Bounties() {
       {items.length === 0 ? (
         <Empty
           title={q ? "No bounties match that" : "No live bounties"}
-          body={q ? "Try another word, or clear the search." : "Fund a prize first. Until the chain confirms it, the listing stays hidden."}
+          body={q ? "Try another word, or clear the search." : "."}
           action={
             q ? null : (
               <Link className="btn" href="/create">
