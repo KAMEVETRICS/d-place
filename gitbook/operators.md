@@ -21,6 +21,7 @@ Copy `.env.example`.
 | `NIMIQ_RPC` | Albatross RPC used to confirm payments. Default `https://rpc.nimiqwatch.com` |
 | `ESCROW_ADDRESS` | NQ address that receives bounty prizes. Required for bounties |
 | `NEXT_PUBLIC_DOCS_URL` | Published handbook. Live value: `https://docs.deplace.space` |
+| `NEXT_PUBLIC_APP_URL` | Stall origin. Live value: `https://app.deplace.space` |
 | `NEXT_PUBLIC_SUPPORT_EMAIL` | Support mailbox for the Support page |
 
 ## GitBook

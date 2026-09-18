@@ -6,14 +6,24 @@ import { useState } from "react";
 import { Icon, type IconName } from "./ui";
 
 const DOCS = process.env.NEXT_PUBLIC_DOCS_URL || "https://docs.deplace.space";
+const APP = (process.env.NEXT_PUBLIC_APP_URL || "https://app.deplace.space").replace(/\/$/, "");
 const MAIL = process.env.NEXT_PUBLIC_SUPPORT_EMAIL ?? "";
 
 function reduceMotion() {
   return typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
+function onAppHost() {
+  return typeof window !== "undefined" && window.location.origin === APP;
+}
+
 export function openApp(router: ReturnType<typeof useRouter>) {
-  router.push(reduceMotion() ? "/app" : "/open");
+  const path = reduceMotion() ? "/app" : "/open";
+  if (onAppHost()) {
+    router.push(path);
+    return;
+  }
+  window.location.assign(`${APP}${path}`);
 }
 
 function SiteBar() {
@@ -113,7 +123,7 @@ export function Landing() {
           <Link href="/docs">Docs</Link>
         )}
         <Link href="/support">Support</Link>
-        <Link href="/app">Stall</Link>
+        <a href={`${APP}/app`}>Stall</a>
       </footer>
     </div>
   );
